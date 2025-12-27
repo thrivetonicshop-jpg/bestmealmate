@@ -1,6 +1,21 @@
 {
-  "buildCommand": "cd bestmealmate && npm install && npm run build",
-  "outputDirectory": "bestmealmate/.next",
-  "installCommand": "cd bestmealmate && npm install",
-  "framework": "nextjs"
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "rootDirectory": "bestmealmate",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key"
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+      "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+      "STRIPE_SECRET_KEY": "@stripe_secret_key",
+      "ANTHROPIC_API_KEY": "@anthropic_api_key"
+    }
+  }
 }
