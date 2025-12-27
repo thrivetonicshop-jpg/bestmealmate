@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ChefHat,
@@ -26,6 +27,7 @@ import {
   X,
   Send
 } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 // Mock data - replace with Supabase queries
 const mockMealPlan = [
@@ -65,8 +67,15 @@ const navItems = [
 ]
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [showAIChef, setShowAIChef] = useState(false)
   const [aiInput, setAIInput] = useState('')
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   const greeting = () => {
     const hour = new Date().getHours()
@@ -131,7 +140,10 @@ export default function DashboardPage() {
             <Settings className="w-5 h-5" />
             <span className="font-medium">Settings</span>
           </Link>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+          >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Sign Out</span>
           </button>
