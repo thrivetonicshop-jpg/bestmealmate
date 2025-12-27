@@ -163,6 +163,40 @@ See `supabase/schema.sql` for complete schema with RLS policies.
 | Premium | $9.99/mo | 4 members, AI chef, smart grocery, pantry |
 | Family | $14.99/mo | Unlimited members, calendar sync, cooking mode |
 
+## Testing with Claude Code
+
+This project includes a Playwright MCP configuration for Claude Code, allowing AI-assisted browser testing.
+
+### Setup
+
+1. Install Claude Code
+2. The `.claude/settings.local.json` file configures the Playwright MCP server automatically
+3. Restart Claude Code after cloning the project
+
+### Available Testing Tools
+
+With Playwright MCP enabled, you have access to:
+- `mcp__playwright__navigate` - Navigate to URLs
+- `mcp__playwright__screenshot` - Capture screenshots
+- `mcp__playwright__click` - Click on elements
+- `mcp__playwright__fill` - Fill in form fields
+- And more browser automation capabilities
+
+### Manual Configuration
+
+If you prefer to configure globally, add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"]
+    }
+  }
+}
+```
+
 ## Contributing
 
 1. Fork the repo
