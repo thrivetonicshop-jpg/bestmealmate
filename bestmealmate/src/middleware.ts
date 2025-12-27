@@ -13,8 +13,8 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // Protected routes - require authentication
-  const protectedRoutes = ['/dashboard', '/onboarding']
+  // Protected routes - require authentication (onboarding is public for new signups)
+  const protectedRoutes = ['/dashboard']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
   // Auth routes - redirect to dashboard if already authenticated
