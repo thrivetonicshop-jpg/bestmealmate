@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY!,
-})
+function getAnthropic() {
+  return new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY!,
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { message, context } = await request.json()
-    
+
     // Build context about the family and pantry
-    const systemPrompt = `You are the AI Chef for BestMealMate, a family meal planning app. 
-    
+    const systemPrompt = `You are the AI Chef for BestMealMate, a family meal planning app.
+
 Your job is to help families decide what to cook based on:
 1. What ingredients they have (especially expiring items)
 2. Each family member's dietary restrictions and allergies
@@ -29,6 +31,7 @@ Guidelines:
 - When suggesting a meal, explain why it's a good fit
 - If asked for a recipe, provide clear step-by-step instructions`
 
+    const anthropic = getAnthropic()
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,

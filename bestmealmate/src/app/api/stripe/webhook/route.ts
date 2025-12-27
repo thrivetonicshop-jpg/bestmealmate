@@ -2,22 +2,25 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
-
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2023-10-16',
+  })
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const signature = request.headers.get('stripe-signature')!
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
   let event: Stripe.Event
 
   try {
+    const stripe = getStripe()
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-  } catch (err: any) {
-    console.error(`Webhook signature verification failed: ${err.message}`)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error(`Webhook signature verification failed: ${message}`)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -25,11 +28,11 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        
+
         // Get the household ID from metadata
         const householdId = session.metadata?.household_id
         const tier = session.metadata?.tier as 'premium' | 'family'
-        
+
         if (householdId && tier) {
           // Update household subscription
           await supabaseAdmin
@@ -46,19 +49,19 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription
-        
+
         // Find household by stripe_customer_id
         const { data: household } = await supabaseAdmin
           .from('households')
           .select('id')
-          .eq('stripe_customer_id', subscription.customer)
+          .eq('stripe_customer_id', subscription.customer as string)
           .single()
 
         if (household) {
           // Determine tier based on price
           let tier: 'free' | 'premium' | 'family' = 'free'
           const priceId = subscription.items.data[0]?.price.id
-          
+
           if (priceId === process.env.STRIPE_PREMIUM_PRICE_ID) {
             tier = 'premium'
           } else if (priceId === process.env.STRIPE_FAMILY_PRICE_ID) {
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
-        
+
         // Downgrade to free tier
         await supabaseAdmin
           .from('households')
@@ -86,13 +89,13 @@ export async function POST(request: NextRequest) {
             subscription_tier: 'free',
             stripe_subscription_id: null,
           })
-          .eq('stripe_customer_id', subscription.customer)
+          .eq('stripe_customer_id', subscription.customer as string)
         break
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
-        
+
         // Could send email notification here
         console.log(`Payment failed for customer: ${invoice.customer}`)
         break

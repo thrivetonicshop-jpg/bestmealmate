@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       households: {
@@ -43,6 +43,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       family_members: {
         Row: {
@@ -93,6 +94,15 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "family_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       dietary_restrictions: {
         Row: {
@@ -113,6 +123,15 @@ export interface Database {
           restriction_type?: string
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "dietary_restrictions_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       allergies: {
         Row: {
@@ -136,6 +155,15 @@ export interface Database {
           severity?: 'mild' | 'moderate' | 'severe'
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "allergies_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       food_dislikes: {
         Row: {
@@ -156,6 +184,60 @@ export interface Database {
           food_name?: string
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "food_dislikes_family_member_id_fkey"
+            columns: ["family_member_id"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      ingredients: {
+        Row: {
+          id: string
+          name: string
+          category: string | null
+          default_unit: string | null
+          calories_per_unit: number | null
+          protein_per_unit: number | null
+          carbs_per_unit: number | null
+          fat_per_unit: number | null
+          barcode: string | null
+          image_url: string | null
+          avg_shelf_life_days: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          category?: string | null
+          default_unit?: string | null
+          calories_per_unit?: number | null
+          protein_per_unit?: number | null
+          carbs_per_unit?: number | null
+          fat_per_unit?: number | null
+          barcode?: string | null
+          image_url?: string | null
+          avg_shelf_life_days?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          category?: string | null
+          default_unit?: string | null
+          calories_per_unit?: number | null
+          protein_per_unit?: number | null
+          carbs_per_unit?: number | null
+          fat_per_unit?: number | null
+          barcode?: string | null
+          image_url?: string | null
+          avg_shelf_life_days?: number | null
+          created_at?: string
+        }
+        Relationships: []
       }
       pantry_items: {
         Row: {
@@ -200,6 +282,22 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "pantry_items_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pantry_items_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       recipes: {
         Row: {
@@ -280,6 +378,15 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "recipes_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       meal_plans: {
         Row: {
@@ -303,6 +410,15 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       planned_meals: {
         Row: {
@@ -341,6 +457,22 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "planned_meals_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planned_meals_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       grocery_lists: {
         Row: {
@@ -370,6 +502,22 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "grocery_lists_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grocery_lists_meal_plan_id_fkey"
+            columns: ["meal_plan_id"]
+            isOneToOne: false
+            referencedRelation: "meal_plans"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       grocery_list_items: {
         Row: {
@@ -417,65 +565,54 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "grocery_list_items_grocery_list_id_fkey"
+            columns: ["grocery_list_id"]
+            isOneToOne: false
+            referencedRelation: "grocery_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grocery_list_items_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          }
+        ]
       }
-      ingredients: {
-        Row: {
-          id: string
-          name: string
-          category: string | null
-          default_unit: string | null
-          calories_per_unit: number | null
-          protein_per_unit: number | null
-          carbs_per_unit: number | null
-          fat_per_unit: number | null
-          barcode: string | null
-          image_url: string | null
-          avg_shelf_life_days: number | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          category?: string | null
-          default_unit?: string | null
-          calories_per_unit?: number | null
-          protein_per_unit?: number | null
-          carbs_per_unit?: number | null
-          fat_per_unit?: number | null
-          barcode?: string | null
-          image_url?: string | null
-          avg_shelf_life_days?: number | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          category?: string | null
-          default_unit?: string | null
-          calories_per_unit?: number | null
-          protein_per_unit?: number | null
-          carbs_per_unit?: number | null
-          fat_per_unit?: number | null
-          barcode?: string | null
-          image_url?: string | null
-          avg_shelf_life_days?: number | null
-          created_at?: string
-        }
-      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
 
 // Helper types
-export type Household = Database['public']['Tables']['households']['Row']
-export type FamilyMember = Database['public']['Tables']['family_members']['Row']
-export type Recipe = Database['public']['Tables']['recipes']['Row']
-export type PantryItem = Database['public']['Tables']['pantry_items']['Row']
-export type MealPlan = Database['public']['Tables']['meal_plans']['Row']
-export type PlannedMeal = Database['public']['Tables']['planned_meals']['Row']
-export type GroceryList = Database['public']['Tables']['grocery_lists']['Row']
-export type GroceryListItem = Database['public']['Tables']['grocery_list_items']['Row']
-export type Ingredient = Database['public']['Tables']['ingredients']['Row']
-export type Allergy = Database['public']['Tables']['allergies']['Row']
-export type DietaryRestriction = Database['public']['Tables']['dietary_restrictions']['Row']
-export type FoodDislike = Database['public']['Tables']['food_dislikes']['Row']
+export type Tables<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Row']
+export type Insertable<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Insert']
+export type Updatable<T extends keyof Database['public']['Tables']> = Database['public']['Tables'][T]['Update']
+
+// Convenience type aliases
+export type Household = Tables<'households'>
+export type FamilyMember = Tables<'family_members'>
+export type Recipe = Tables<'recipes'>
+export type PantryItem = Tables<'pantry_items'>
+export type MealPlan = Tables<'meal_plans'>
+export type PlannedMeal = Tables<'planned_meals'>
+export type GroceryList = Tables<'grocery_lists'>
+export type GroceryListItem = Tables<'grocery_list_items'>
+export type Ingredient = Tables<'ingredients'>
+export type Allergy = Tables<'allergies'>
+export type DietaryRestriction = Tables<'dietary_restrictions'>
+export type FoodDislike = Tables<'food_dislikes'>
