@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16',
-})
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: '2023-10-16',
+  })
+}
 
 export async function POST(request: NextRequest) {
   try {
     const { householdId, tier, email } = await request.json()
 
-    const priceId = tier === 'family' 
-      ? process.env.STRIPE_FAMILY_PRICE_ID 
+    const priceId = tier === 'family'
+      ? process.env.STRIPE_FAMILY_PRICE_ID
       : process.env.STRIPE_PREMIUM_PRICE_ID
 
+    const stripe = getStripe()
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -35,10 +38,11 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({ url: session.url })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create checkout session'
     console.error('Stripe checkout error:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { error: message },
       { status: 500 }
     )
   }
