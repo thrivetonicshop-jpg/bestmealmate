@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ChefHat,
   Calendar,
@@ -372,10 +373,12 @@ export default function RecipesPage() {
                 className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
               >
                 <div className="relative h-48">
-                  <img
+                  <Image
                     src={recipe.image_url}
                     alt={recipe.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
+                    unoptimized
                   />
                   <button
                     onClick={() => toggleFavorite(recipe.id)}
