@@ -15,6 +15,7 @@ import {
   Check
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { supabase } from '@/lib/supabase'
 
 // Types
 interface FamilyMember {
@@ -84,13 +85,72 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setIsLoading(true)
     try {
-      // TODO: Implement Supabase auth and data creation
-      // For now, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Create user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (authError) throw authError
+      if (!authData.user) throw new Error('Failed to create user')
+
+      // Create household
+      const householdRes = await fetch('/api/household', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: householdName || 'My Household',
+          userId: authData.user.id,
+          userName: familyMembers[0]?.name || 'Me',
+          userAge: parseInt(familyMembers[0]?.age) || null,
+        }),
+      })
+
+      const householdData = await householdRes.json()
+      if (!householdRes.ok) throw new Error(householdData.error)
+
+      // Add additional family members
+      for (let i = 1; i < familyMembers.length; i++) {
+        const member = familyMembers[i]
+        if (!member.name.trim()) continue
+
+        await fetch('/api/family', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            householdId: householdData.household.id,
+            name: member.name.trim(),
+            age: parseInt(member.age) || null,
+            isPickyEater: member.isPicky,
+            allergies: member.allergies,
+            restrictions: member.restrictions,
+          }),
+        })
+      }
+
+      // Update first member with allergies/restrictions if any
+      const firstMember = familyMembers[0]
+      if (firstMember && (firstMember.allergies.length > 0 || firstMember.restrictions.length > 0 || firstMember.isPicky)) {
+        await fetch('/api/family', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: householdData.member.id,
+            isPickyEater: firstMember.isPicky,
+            allergies: firstMember.allergies,
+            restrictions: firstMember.restrictions,
+          }),
+        })
+      }
+
       toast.success('Welcome to BestMealMate!')
       router.push('/dashboard')
-    } catch (error) {
-      toast.error('Something went wrong. Please try again.')
+    } catch (error: any) {
+      console.error('Onboarding error:', error)
+      toast.error(error.message || 'Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }

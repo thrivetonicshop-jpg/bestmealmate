@@ -1,169 +1,230 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { 
-  ChefHat, 
-  Calendar, 
-  ShoppingCart, 
-  Refrigerator, 
-  Users,
-  Sparkles,
-  Plus,
+import {
+  Calendar,
+  ShoppingCart,
   ChevronRight,
   Clock,
   Check,
   AlertTriangle,
-  Settings,
-  LogOut
+  Plus,
+  Sparkles,
+  ChefHat
 } from 'lucide-react'
-
-// Mock data - replace with Supabase queries
-const mockMealPlan = [
-  { day: 'Today', meal: 'Sheet Pan Chicken & Veggies', time: '35 min', status: 'ready' },
-  { day: 'Tomorrow', meal: 'Beef Tacos', time: '25 min', status: 'planned' },
-  { day: 'Wednesday', meal: 'Pasta Primavera', time: '30 min', status: 'planned' },
-]
-
-const mockExpiring = [
-  { name: 'Chicken Breast', days: 1, location: 'Fridge' },
-  { name: 'Spinach', days: 2, location: 'Fridge' },
-  { name: 'Greek Yogurt', days: 3, location: 'Fridge' },
-]
-
-const mockGroceryItems = [
-  { name: 'Onions', quantity: '3', checked: false },
-  { name: 'Bell Peppers', quantity: '4', checked: false },
-  { name: 'Ground Beef', quantity: '2 lbs', checked: true },
-  { name: 'Tortillas', quantity: '1 pack', checked: false },
-]
-
-const mockFamily = [
-  { name: 'You', avatar: '👨', restrictions: [] },
-  { name: 'Sarah', avatar: '👩', restrictions: ['Vegetarian'] },
-  { name: 'Jake', avatar: '👦', restrictions: ['Nut Allergy'] },
-  { name: 'Emma', avatar: '👧', restrictions: [] },
-]
+import toast from 'react-hot-toast'
+import DashboardLayout from '@/components/DashboardLayout'
+import { useAuthStore, useFamilyStore, usePantryStore, useGroceryStore, useMealPlanStore, useUIStore } from '@/lib/store'
+import { cn, getExpiryStatus, formatCookingTime, avatarEmojis, formatDayOfWeek, getWeekDates } from '@/lib/utils'
+import { format } from 'date-fns'
 
 export default function DashboardPage() {
-  const [showAIChef, setShowAIChef] = useState(false)
+  const { household } = useAuthStore()
+  const { members, setMembers } = useFamilyStore()
+  const { items: pantryItems, setItems: setPantryItems } = usePantryStore()
+  const { items: groceryItems, setItems: setGroceryItems, currentList, setCurrentList, togglePurchased } = useGroceryStore()
+  const { plannedMeals, setPlannedMeals, setCurrentPlan } = useMealPlanStore()
+  const { setAIChefOpen } = useUIStore()
+
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Fetch all dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!household?.id) {
+        setIsLoading(false)
+        return
+      }
+
+      setIsLoading(true)
+      try {
+        const weekStart = format(getWeekDates()[0], 'yyyy-MM-dd')
+
+        const [familyRes, pantryRes, groceryRes, mealPlanRes] = await Promise.all([
+          fetch(`/api/family?householdId=${household.id}`),
+          fetch(`/api/pantry?householdId=${household.id}`),
+          fetch(`/api/groceries?householdId=${household.id}`),
+          fetch(`/api/meal-plans?householdId=${household.id}&weekStart=${weekStart}`)
+        ])
+
+        const [familyData, pantryData, groceryData, mealPlanData] = await Promise.all([
+          familyRes.json(),
+          pantryRes.json(),
+          groceryRes.json(),
+          mealPlanRes.json()
+        ])
+
+        setMembers(familyData.members || [])
+        setPantryItems(pantryData.items || [])
+        setGroceryItems(groceryData.items || [])
+        setCurrentList(groceryData.currentList || null)
+        setCurrentPlan(mealPlanData.mealPlan || null)
+        setPlannedMeals(mealPlanData.plannedMeals || [])
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDashboardData()
+  }, [household?.id, setMembers, setPantryItems, setGroceryItems, setCurrentList, setCurrentPlan, setPlannedMeals])
+
+  // Get expiring items (within 3 days)
+  const expiringItems = pantryItems
+    .filter((item) => {
+      if (!item.expiry_date) return false
+      const status = getExpiryStatus(item.expiry_date)
+      return status.urgency === 'urgent' || status.urgency === 'soon'
+    })
+    .slice(0, 5)
+
+  // Get today's and upcoming meals
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const todayMeals = plannedMeals.filter((m) => m.meal_date === todayStr)
+  const dinnerTonight = todayMeals.find((m) => m.meal_type === 'dinner')
+
+  // Get next 3 days of dinner plans
+  const upcomingMeals = plannedMeals
+    .filter((m) => m.meal_type === 'dinner' && m.meal_date >= todayStr)
+    .slice(0, 3)
+
+  // Get unchecked grocery items
+  const uncheckedGroceryItems = groceryItems.filter((i) => !i.is_purchased).slice(0, 5)
+
+  const handleToggleGroceryItem = async (id: string, isPurchased: boolean) => {
+    try {
+      await fetch('/api/groceries', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggleItem', id, isPurchased: !isPurchased }),
+      })
+      togglePurchased(id)
+    } catch (error) {
+      toast.error('Failed to update item')
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 p-4 hidden lg:block">
-        <div className="flex items-center gap-2 mb-8">
-          <ChefHat className="w-8 h-8 text-brand-600" />
-          <span className="text-xl font-bold text-gray-900">BestMealMate</span>
-        </div>
-        
-        <nav className="space-y-1">
-          {[
-            { icon: Calendar, label: 'Meal Plan', href: '/dashboard', active: true },
-            { icon: ShoppingCart, label: 'Grocery List', href: '/dashboard/groceries', active: false },
-            { icon: Refrigerator, label: 'Pantry', href: '/dashboard/pantry', active: false },
-            { icon: ChefHat, label: 'Recipes', href: '/dashboard/recipes', active: false },
-            { icon: Users, label: 'Family', href: '/dashboard/family', active: false },
-          ].map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                item.active 
-                  ? 'bg-brand-50 text-brand-700' 
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="font-medium">{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-        
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="border-t border-gray-200 pt-4 space-y-1">
-            <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <Settings className="w-5 h-5" />
-              <span className="font-medium">Settings</span>
-            </Link>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Sign Out</span>
-            </button>
+    <DashboardLayout>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-10 h-10 border-3 border-brand-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500">Loading your dashboard...</p>
           </div>
         </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="lg:ml-64 p-4 lg:p-8">
-        {/* Header */}
-        <header className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Good evening!</h1>
-            <p className="text-gray-600">Here's what's cooking this week</p>
-          </div>
-          <button
-            onClick={() => setShowAIChef(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors"
-          >
-            <Sparkles className="w-5 h-5" />
-            Ask AI Chef
-          </button>
-        </header>
-
+      ) : (
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Main Column - Meal Plan */}
           <div className="lg:col-span-2 space-y-6">
             {/* Tonight's Dinner - Hero Card */}
-            <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-6 text-white">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-brand-100 text-sm font-medium mb-1">Tonight's Dinner</p>
-                  <h2 className="text-2xl font-bold">{mockMealPlan[0].meal}</h2>
+            {dinnerTonight ? (
+              <div className="bg-gradient-to-br from-brand-600 to-brand-700 rounded-2xl p-6 text-white">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <p className="text-brand-100 text-sm font-medium mb-1">Tonight's Dinner</p>
+                    <h2 className="text-2xl font-bold">
+                      {dinnerTonight.recipe?.name || 'Meal planned'}
+                    </h2>
+                  </div>
+                  {dinnerTonight.recipe?.total_time_minutes && (
+                    <div className="bg-white/20 rounded-lg px-3 py-1 flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        {formatCookingTime(dinnerTonight.recipe.total_time_minutes)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="bg-white/20 rounded-lg px-3 py-1 flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-sm font-medium">{mockMealPlan[0].time}</span>
+                <div className="flex items-center gap-2 mb-4">
+                  <Check className="w-5 h-5 text-brand-200" />
+                  <span className="text-brand-100">
+                    {dinnerTonight.status === 'cooked' ? 'Already cooked!' : 'Ready to cook'}
+                  </span>
+                </div>
+                <div className="flex gap-3">
+                  <Link
+                    href="/dashboard/recipes"
+                    className="flex-1 bg-white text-brand-700 py-3 rounded-xl font-semibold hover:bg-brand-50 transition-colors text-center"
+                  >
+                    View Recipe
+                  </Link>
+                  <button className="px-4 py-3 bg-white/20 rounded-xl font-medium hover:bg-white/30 transition-colors">
+                    Swap Meal
+                  </button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mb-4">
-                <Check className="w-5 h-5 text-brand-200" />
-                <span className="text-brand-100">You have all the ingredients</span>
+            ) : (
+              <div className="bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl p-6">
+                <div className="text-center py-4">
+                  <ChefHat className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <h2 className="text-xl font-semibold text-gray-700 mb-2">No dinner planned for tonight</h2>
+                  <p className="text-gray-500 mb-4">Let AI Chef suggest something based on your pantry!</p>
+                  <button
+                    onClick={() => setAIChefOpen(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-xl font-semibold hover:bg-brand-700 transition-colors"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Get Suggestions
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-3">
-                <button className="flex-1 bg-white text-brand-700 py-3 rounded-xl font-semibold hover:bg-brand-50 transition-colors">
-                  Start Cooking
-                </button>
-                <button className="px-4 py-3 bg-white/20 rounded-xl font-medium hover:bg-white/30 transition-colors">
-                  Swap Meal
-                </button>
-              </div>
-            </div>
+            )}
 
             {/* This Week */}
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">This Week</h3>
-                <Link href="/dashboard/plan" className="text-brand-600 text-sm font-medium hover:text-brand-700 flex items-center gap-1">
+                <Link href="/dashboard/calendar" className="text-brand-600 text-sm font-medium hover:text-brand-700 flex items-center gap-1">
                   View All <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
-              <div className="space-y-3">
-                {mockMealPlan.map((meal, i) => (
-                  <div key={i} className={`flex items-center justify-between p-3 rounded-xl ${i === 0 ? 'bg-brand-50' : 'hover:bg-gray-50'} transition-colors`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${i === 0 ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                        <Calendar className="w-5 h-5" />
+              {upcomingMeals.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingMeals.map((meal) => (
+                    <div
+                      key={meal.id}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-xl transition-colors",
+                        meal.meal_date === todayStr ? "bg-brand-50" : "hover:bg-gray-50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-10 h-10 rounded-lg flex items-center justify-center",
+                          meal.meal_date === todayStr ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600"
+                        )}>
+                          <Calendar className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {meal.recipe?.name || 'Unnamed meal'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {formatDayOfWeek(meal.meal_date)}
+                            {meal.recipe?.total_time_minutes && ` · ${formatCookingTime(meal.recipe.total_time_minutes)}`}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{meal.meal}</p>
-                        <p className="text-sm text-gray-500">{meal.day} • {meal.time}</p>
-                      </div>
+                      <ChevronRight className="w-5 h-5 text-gray-400" />
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400" />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 mb-3">No meals planned yet</p>
+                  <Link
+                    href="/dashboard/calendar"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Plan Meals
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Family */}
@@ -174,21 +235,28 @@ export default function DashboardPage() {
                   Manage <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
-              <div className="flex items-center gap-4">
-                {mockFamily.map((member, i) => (
-                  <div key={i} className="text-center">
-                    <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl mb-1">
-                      {member.avatar}
-                    </div>
-                    <p className="text-sm font-medium text-gray-700">{member.name}</p>
-                    {member.restrictions.length > 0 && (
-                      <p className="text-xs text-gray-500">{member.restrictions[0]}</p>
-                    )}
-                  </div>
-                ))}
-                <button className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center text-gray-400 hover:border-brand-400 hover:text-brand-600 transition-colors">
+              <div className="flex items-center gap-4 flex-wrap">
+                {members.length > 0 ? (
+                  <>
+                    {members.map((member, i) => (
+                      <div key={member.id} className="text-center">
+                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-2xl mb-1">
+                          {avatarEmojis[i % avatarEmojis.length]}
+                        </div>
+                        <p className="text-sm font-medium text-gray-700">{member.name}</p>
+                        {member.dietary_restrictions && member.dietary_restrictions.length > 0 && (
+                          <p className="text-xs text-gray-500">{member.dietary_restrictions[0].restriction_type}</p>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                ) : null}
+                <Link
+                  href="/dashboard/family"
+                  className="w-12 h-12 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center text-gray-400 hover:border-brand-400 hover:text-brand-600 transition-colors"
+                >
                   <Plus className="w-5 h-5" />
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -201,154 +269,137 @@ export default function DashboardPage() {
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
                 <h3 className="font-semibold text-gray-900">Expiring Soon</h3>
               </div>
-              <div className="space-y-3">
-                {mockExpiring.map((item, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">{item.name}</p>
-                      <p className="text-sm text-gray-500">{item.location}</p>
-                    </div>
-                    <span className={`text-sm font-medium ${item.days <= 1 ? 'text-red-600' : 'text-amber-600'}`}>
-                      {item.days === 1 ? 'Tomorrow' : `${item.days} days`}
-                    </span>
+              {expiringItems.length > 0 ? (
+                <>
+                  <div className="space-y-3">
+                    {expiringItems.map((item) => {
+                      const expiry = getExpiryStatus(item.expiry_date)
+                      return (
+                        <div key={item.id} className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-gray-900">{item.ingredient?.name || 'Unknown'}</p>
+                            <p className="text-sm text-gray-500 capitalize">{item.location}</p>
+                          </div>
+                          <span className={cn("text-sm font-medium", expiry.color)}>
+                            {expiry.label}
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
-                ))}
-              </div>
-              <button className="w-full mt-4 py-2 text-brand-600 font-medium text-sm hover:text-brand-700 transition-colors">
-                Use these first →
-              </button>
+                  <button
+                    onClick={() => setAIChefOpen(true)}
+                    className="w-full mt-4 py-2 text-brand-600 font-medium text-sm hover:text-brand-700 transition-colors"
+                  >
+                    Use these first →
+                  </button>
+                </>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No items expiring soon</p>
+              )}
             </div>
 
             {/* Grocery List Preview */}
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">Grocery List</h3>
-                <span className="text-sm text-gray-500">{mockGroceryItems.filter(i => !i.checked).length} items</span>
+                <span className="text-sm text-gray-500">
+                  {uncheckedGroceryItems.length} items
+                </span>
               </div>
-              <div className="space-y-2">
-                {mockGroceryItems.slice(0, 4).map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <button className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                      item.checked 
-                        ? 'bg-brand-600 border-brand-600 text-white' 
-                        : 'border-gray-300 hover:border-brand-400'
-                    }`}>
-                      {item.checked && <Check className="w-3 h-3" />}
-                    </button>
-                    <span className={`flex-1 ${item.checked ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                      {item.name}
-                    </span>
-                    <span className="text-sm text-gray-500">{item.quantity}</span>
+              {uncheckedGroceryItems.length > 0 ? (
+                <>
+                  <div className="space-y-2">
+                    {uncheckedGroceryItems.map((item) => (
+                      <div key={item.id} className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleToggleGroceryItem(item.id, item.is_purchased)}
+                          className={cn(
+                            "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                            item.is_purchased
+                              ? "bg-brand-600 border-brand-600 text-white"
+                              : "border-gray-300 hover:border-brand-400"
+                          )}
+                        >
+                          {item.is_purchased && <Check className="w-3 h-3" />}
+                        </button>
+                        <span className={cn(
+                          "flex-1",
+                          item.is_purchased ? "text-gray-400 line-through" : "text-gray-700"
+                        )}>
+                          {item.ingredient?.name || 'Unknown'}
+                        </span>
+                        {item.quantity > 1 && (
+                          <span className="text-sm text-gray-500">{item.quantity}</span>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <Link href="/dashboard/groceries" className="block w-full mt-4 py-2 text-center text-brand-600 font-medium text-sm hover:text-brand-700 transition-colors">
-                View Full List →
-              </Link>
+                  <Link href="/dashboard/groceries" className="block w-full mt-4 py-2 text-center text-brand-600 font-medium text-sm hover:text-brand-700 transition-colors">
+                    View Full List →
+                  </Link>
+                </>
+              ) : currentList ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 mb-3">Your list is complete!</p>
+                  <Link
+                    href="/dashboard/groceries"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-100 text-brand-700 rounded-lg font-medium hover:bg-brand-200"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Add Items
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 mb-3">No grocery list yet</p>
+                  <Link
+                    href="/dashboard/groceries"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Create List
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl p-6 border border-gray-200">
               <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-2">
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                <Link
+                  href="/dashboard/pantry"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                >
                   <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center">
                     <Plus className="w-5 h-5 text-brand-600" />
                   </div>
                   <span className="font-medium text-gray-700">Add to Pantry</span>
-                </button>
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                </Link>
+                <Link
+                  href="/dashboard/recipes"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                >
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                     <ChefHat className="w-5 h-5 text-purple-600" />
                   </div>
                   <span className="font-medium text-gray-700">Browse Recipes</span>
-                </button>
-                <button className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left">
+                </Link>
+                <button
+                  onClick={() => setAIChefOpen(true)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors text-left"
+                >
                   <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <ShoppingCart className="w-5 h-5 text-orange-600" />
+                    <Sparkles className="w-5 h-5 text-orange-600" />
                   </div>
-                  <span className="font-medium text-gray-700">Order Groceries</span>
+                  <span className="font-medium text-gray-700">Ask AI Chef</span>
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* AI Chef Modal */}
-      {showAIChef && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-brand-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">AI Chef</h3>
-                  <p className="text-sm text-gray-500">Ask me anything about meals</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setShowAIChef(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <span className="text-2xl text-gray-400">&times;</span>
-              </button>
-            </div>
-            
-            <div className="bg-gray-50 rounded-xl p-4 mb-4">
-              <p className="text-gray-600">
-                Based on your pantry and family preferences, I suggest <strong>Honey Garlic Chicken</strong> for tonight. 
-                It uses your chicken that expires tomorrow, takes 30 minutes, and everyone in your family can eat it!
-              </p>
-            </div>
-            
-            <div className="flex gap-2 mb-4">
-              <button className="px-4 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors">
-                Add to Plan
-              </button>
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                Show Recipe
-              </button>
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                Suggest Another
-              </button>
-            </div>
-            
-            <div className="border-t border-gray-200 pt-4">
-              <input
-                type="text"
-                placeholder="Ask me anything... (e.g., 'What can I make with chicken?')"
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all"
-              />
             </div>
           </div>
         </div>
       )}
-
-      {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden">
-        <div className="flex items-center justify-around py-2">
-          {[
-            { icon: Calendar, label: 'Plan', active: true },
-            { icon: ShoppingCart, label: 'Groceries', active: false },
-            { icon: Refrigerator, label: 'Pantry', active: false },
-            { icon: ChefHat, label: 'Recipes', active: false },
-            { icon: Users, label: 'Family', active: false },
-          ].map((item) => (
-            <button
-              key={item.label}
-              className={`flex flex-col items-center gap-1 px-3 py-1 ${
-                item.active ? 'text-brand-600' : 'text-gray-400'
-              }`}
-            >
-              <item.icon className="w-6 h-6" />
-              <span className="text-xs font-medium">{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
-    </div>
+    </DashboardLayout>
   )
 }
