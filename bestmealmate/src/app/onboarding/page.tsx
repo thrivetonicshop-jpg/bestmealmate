@@ -84,13 +84,112 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setIsLoading(true)
     try {
-      // TODO: Implement Supabase auth and data creation
-      // For now, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      toast.success('Welcome to BestMealMate!')
+      // Import Supabase
+      const { supabase, createHouseholdWithMember } = await import('@/lib/supabase')
+
+      // 1. Create user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (authError) throw authError
+      if (!authData.user) throw new Error('Failed to create user')
+
+      // 2. Create household and family member
+      const { household } = await createHouseholdWithMember(
+        authData.user.id,
+        householdName || 'My Household',
+        familyMembers[0]?.name || email.split('@')[0],
+        email
+      )
+
+      // 3. Add additional family members
+      for (let i = 1; i < familyMembers.length; i++) {
+        const member = familyMembers[i]
+        if (!member.name.trim()) continue
+
+        const { data: newMember, error: memberError } = await supabase
+          .from('family_members')
+          .insert({
+            household_id: household.id,
+            name: member.name,
+            age: member.age ? parseInt(member.age) : null,
+            is_picky_eater: member.isPicky,
+            role: 'member',
+          })
+          .select()
+          .single()
+
+        if (memberError) {
+          console.error('Error adding family member:', memberError)
+          continue
+        }
+
+        // Add allergies for this member
+        if (member.allergies.length > 0 && newMember) {
+          const allergyInserts = member.allergies.map(allergen => ({
+            family_member_id: newMember.id,
+            allergen,
+            severity: 'moderate' as const,
+          }))
+          await supabase.from('allergies').insert(allergyInserts)
+        }
+
+        // Add dietary restrictions for this member
+        if (member.restrictions.length > 0 && newMember) {
+          const restrictionInserts = member.restrictions.map(restriction_type => ({
+            family_member_id: newMember.id,
+            restriction_type,
+          }))
+          await supabase.from('dietary_restrictions').insert(restrictionInserts)
+        }
+      }
+
+      // 4. Add allergies and restrictions for the first member (admin)
+      const { data: adminMember } = await supabase
+        .from('family_members')
+        .select('id')
+        .eq('household_id', household.id)
+        .eq('role', 'admin')
+        .single()
+
+      if (adminMember && familyMembers[0]) {
+        if (familyMembers[0].allergies.length > 0) {
+          const allergyInserts = familyMembers[0].allergies.map(allergen => ({
+            family_member_id: adminMember.id,
+            allergen,
+            severity: 'moderate' as const,
+          }))
+          await supabase.from('allergies').insert(allergyInserts)
+        }
+
+        if (familyMembers[0].restrictions.length > 0) {
+          const restrictionInserts = familyMembers[0].restrictions.map(restriction_type => ({
+            family_member_id: adminMember.id,
+            restriction_type,
+          }))
+          await supabase.from('dietary_restrictions').insert(restrictionInserts)
+        }
+
+        // Update picky eater status
+        if (familyMembers[0].isPicky) {
+          await supabase
+            .from('family_members')
+            .update({ is_picky_eater: true })
+            .eq('id', adminMember.id)
+        }
+      }
+
+      toast.success('Welcome to BestMealMate! Check your email to confirm your account.')
       router.push('/dashboard')
-    } catch (error) {
-      toast.error('Something went wrong. Please try again.')
+    } catch (error: unknown) {
+      console.error('Onboarding error:', error)
+      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+      toast.error(message)
     } finally {
       setIsLoading(false)
     }

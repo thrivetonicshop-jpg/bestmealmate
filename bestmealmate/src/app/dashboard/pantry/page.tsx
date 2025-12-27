@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import {
   ChefHat,
   Calendar,
@@ -21,11 +22,21 @@ import {
   LogOut,
   Snowflake,
   Home,
-  Package
+  Package,
+  Camera
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/auth-context'
 import type { PantryItem, Ingredient } from '@/lib/database.types'
 import toast, { Toaster } from 'react-hot-toast'
+
+// Dynamically import FoodScanner to avoid SSR issues with camera
+const FoodScanner = dynamic(() => import('@/components/FoodScanner'), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+    <div className="text-white">Loading scanner...</div>
+  </div>
+})
 
 type LocationType = 'fridge' | 'freezer' | 'pantry' | 'spice_rack' | 'other'
 
@@ -83,10 +94,12 @@ const categoryColors: Record<string, string> = {
 }
 
 export default function PantryPage() {
+  const { household } = useAuth()
   const [items, setItems] = useState<PantryItemWithIngredient[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
   const [editingItem, setEditingItem] = useState<PantryItemWithIngredient | null>(null)
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [searchTerm, setSearchTerm] = useState('')
@@ -94,8 +107,48 @@ export default function PantryPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'expired' | 'expiring' | 'fresh'>('all')
   const [showFilters, setShowFilters] = useState(false)
 
-  // Mock household ID - in production, get from auth context
-  const householdId = 'demo-household-id'
+  // Get household ID from auth context, fallback to demo
+  const householdId = household?.id || 'demo-household-id'
+
+  // Handle scanned items from food scanner
+  const handleScannedItems = async (scannedItems: { name: string; quantity: string; category: string; confidence: number }[]) => {
+    for (const item of scannedItems) {
+      // Parse quantity string (e.g., "1 gallon" -> quantity: 1, unit: "gallon")
+      const quantityMatch = item.quantity.match(/^([\d.]+)\s*(.*)$/)
+      const quantity = quantityMatch ? parseFloat(quantityMatch[1]) : 1
+      const unit = quantityMatch ? quantityMatch[2] : ''
+
+      const newItem: PantryItemWithIngredient = {
+        id: `scanned-${Date.now()}-${Math.random()}`,
+        household_id: householdId,
+        ingredient_id: `ing-${Date.now()}`,
+        quantity,
+        unit: unit || null,
+        location: 'fridge',
+        expiry_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        added_date: new Date().toISOString().split('T')[0],
+        is_staple: false,
+        notes: `Scanned (${Math.round(item.confidence * 100)}% confidence)`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        ingredients: {
+          id: `ing-${Date.now()}`,
+          name: item.name,
+          category: item.category,
+          default_unit: unit || null,
+          calories_per_unit: null,
+          protein_per_unit: null,
+          carbs_per_unit: null,
+          fat_per_unit: null,
+          barcode: null,
+          image_url: null,
+          avg_shelf_life_days: null,
+          created_at: new Date().toISOString()
+        }
+      }
+      setItems(prev => [...prev, newItem])
+    }
+  }
 
   useEffect(() => {
     fetchPantryItems()
@@ -518,13 +571,22 @@ export default function PantryPage() {
             <h1 className="text-2xl font-bold text-gray-900">Pantry</h1>
             <p className="text-gray-600">Manage your ingredients and track expiry dates</p>
           </div>
-          <button
-            onClick={openAddModal}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Item
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowScanner(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
+            >
+              <Camera className="w-5 h-5" />
+              Scan Food
+            </button>
+            <button
+              onClick={openAddModal}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              Add Item
+            </button>
+          </div>
         </header>
 
         {/* Stats Cards */}
@@ -891,6 +953,14 @@ export default function PantryPage() {
           ))}
         </div>
       </nav>
+
+      {/* Food Scanner Modal */}
+      {showScanner && (
+        <FoodScanner
+          onItemsDetected={handleScannedItems}
+          onClose={() => setShowScanner(false)}
+        />
+      )}
     </div>
   )
 }
