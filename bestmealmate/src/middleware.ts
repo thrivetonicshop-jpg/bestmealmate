@@ -4,13 +4,6 @@ import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
-
-  // Create a Supabase client configured to use cookies
-  const supabase = createMiddlewareClient({ req: request, res })
-
-  // Refresh session if expired - required for Server Components
-  const { data: { session } } = await supabase.auth.getSession()
-
   const { pathname } = request.nextUrl
 
   // Protected routes - require authentication (onboarding is public for new signups)
@@ -20,6 +13,19 @@ export async function middleware(request: NextRequest) {
   // Auth routes - redirect to dashboard if already authenticated
   const authRoutes = ['/login']
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+
+  // Try to get session, but handle errors gracefully
+  let session = null
+  try {
+    // Create a Supabase client configured to use cookies
+    const supabase = createMiddlewareClient({ req: request, res })
+    // Refresh session if expired - required for Server Components
+    const { data } = await supabase.auth.getSession()
+    session = data?.session
+  } catch (error) {
+    // If Supabase is not configured or unreachable, allow public routes
+    console.warn('Middleware: Could not get session', error)
+  }
 
   // If user is not authenticated and trying to access protected route
   if (!session && isProtectedRoute) {
