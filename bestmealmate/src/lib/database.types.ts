@@ -462,6 +462,203 @@ export interface Database {
           created_at?: string
         }
       }
+      recipe_ingredients: {
+        Row: {
+          id: string
+          recipe_id: string
+          ingredient_id: string
+          quantity: number
+          unit: string | null
+          notes: string | null
+          is_optional: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipe_id: string
+          ingredient_id: string
+          quantity: number
+          unit?: string | null
+          notes?: string | null
+          is_optional?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipe_id?: string
+          ingredient_id?: string
+          quantity?: number
+          unit?: string | null
+          notes?: string | null
+          is_optional?: boolean
+          created_at?: string
+        }
+      }
+      recipe_steps: {
+        Row: {
+          id: string
+          recipe_id: string
+          step_number: number
+          instruction: string
+          timer_minutes: number | null
+          image_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipe_id: string
+          step_number: number
+          instruction: string
+          timer_minutes?: number | null
+          image_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipe_id?: string
+          step_number?: number
+          instruction?: string
+          timer_minutes?: number | null
+          image_url?: string | null
+          created_at?: string
+        }
+      }
+      recipe_tags: {
+        Row: {
+          id: string
+          recipe_id: string
+          tag: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          recipe_id: string
+          tag: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          recipe_id?: string
+          tag?: string
+          created_at?: string
+        }
+      }
+      meal_attendees: {
+        Row: {
+          id: string
+          planned_meal_id: string
+          family_member_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          planned_meal_id: string
+          family_member_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          planned_meal_id?: string
+          family_member_id?: string
+          created_at?: string
+        }
+      }
+      grocery_item_sources: {
+        Row: {
+          id: string
+          grocery_list_item_id: string
+          planned_meal_id: string
+          quantity_needed: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          grocery_list_item_id: string
+          planned_meal_id: string
+          quantity_needed?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          grocery_list_item_id?: string
+          planned_meal_id?: string
+          quantity_needed?: number | null
+          created_at?: string
+        }
+      }
+      recipe_ratings: {
+        Row: {
+          id: string
+          household_id: string
+          recipe_id: string
+          rating: number | null
+          notes: string | null
+          cooked_count: number
+          last_cooked_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          household_id: string
+          recipe_id: string
+          rating?: number | null
+          notes?: string | null
+          cooked_count?: number
+          last_cooked_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          household_id?: string
+          recipe_id?: string
+          rating?: number | null
+          notes?: string | null
+          cooked_count?: number
+          last_cooked_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      waste_log: {
+        Row: {
+          id: string
+          household_id: string
+          ingredient_id: string | null
+          ingredient_name: string | null
+          quantity: number | null
+          unit: string | null
+          reason: string | null
+          wasted_at: string
+          estimated_cost: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          household_id: string
+          ingredient_id?: string | null
+          ingredient_name?: string | null
+          quantity?: number | null
+          unit?: string | null
+          reason?: string | null
+          wasted_at?: string
+          estimated_cost?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          household_id?: string
+          ingredient_id?: string | null
+          ingredient_name?: string | null
+          quantity?: number | null
+          unit?: string | null
+          reason?: string | null
+          wasted_at?: string
+          estimated_cost?: number | null
+          created_at?: string
+        }
+      }
     }
   }
 }
