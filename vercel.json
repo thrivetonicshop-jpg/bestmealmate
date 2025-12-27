@@ -5,16 +5,30 @@
   "framework": "nextjs",
   "outputDirectory": ".next",
   "rootDirectory": "bestmealmate",
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/ai-chef/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/stripe/webhook/route.ts": {
+      "maxDuration": 30
+    }
+  },
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key"
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+    "NEXT_PUBLIC_APP_URL": "@app_url"
   },
   "build": {
     "env": {
       "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase_anon_key",
+      "NEXT_PUBLIC_APP_URL": "@app_url",
       "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
       "STRIPE_SECRET_KEY": "@stripe_secret_key",
+      "STRIPE_WEBHOOK_SECRET": "@stripe_webhook_secret",
+      "STRIPE_FAMILY_PRICE_ID": "@stripe_family_price_id",
+      "STRIPE_PREMIUM_PRICE_ID": "@stripe_premium_price_id",
       "ANTHROPIC_API_KEY": "@anthropic_api_key"
     }
   }
