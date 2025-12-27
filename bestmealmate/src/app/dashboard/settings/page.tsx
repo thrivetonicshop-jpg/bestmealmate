@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
   ChefHat,
@@ -18,16 +19,28 @@ import {
   Trash2,
   Check,
   ChevronRight,
-  Crown
+  Crown,
+  Loader2,
+  ExternalLink
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
+import { supabase } from '@/lib/supabase'
+import { SocialLinks } from '@/components/SocialShare'
+import { ContentCreationBar } from '@/components/ContentCreation'
 
 export default function SettingsPage() {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
+
   const [household, setHousehold] = useState({
-    name: 'The Smith Family',
+    id: '',
+    name: 'My Family',
     timezone: 'America/New_York',
-    preferred_store: 'Whole Foods',
-    subscription_tier: 'premium' as 'free' | 'premium' | 'family'
+    preferred_store: '',
+    subscription_tier: 'free' as 'free' | 'premium' | 'family',
+    stripe_customer_id: null as string | null,
+    stripe_subscription_id: null as string | null,
   })
 
   const [notifications, setNotifications] = useState({
@@ -39,9 +52,115 @@ export default function SettingsPage() {
   })
 
   const [theme, setTheme] = useState('system')
+  const [userEmail, setUserEmail] = useState('')
 
-  function handleSave() {
-    toast.success('Settings saved')
+  // Load user data
+  useEffect(() => {
+    async function loadData() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      setUserEmail(user.email || '')
+
+      // Get household data
+      const { data: familyMember } = await supabase
+        .from('family_members')
+        .select(`
+          household_id,
+          households (*)
+        `)
+        .eq('user_id', user.id)
+        .single()
+
+      if (familyMember?.households) {
+        const h = familyMember.households as any
+        setHousehold({
+          id: h.id,
+          name: h.name || 'My Family',
+          timezone: h.timezone || 'America/New_York',
+          preferred_store: h.preferred_grocery_store || '',
+          subscription_tier: h.subscription_tier || 'free',
+          stripe_customer_id: h.stripe_customer_id,
+          stripe_subscription_id: h.stripe_subscription_id,
+        })
+      }
+    }
+    loadData()
+  }, [router])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
+
+  async function handleSave() {
+    setIsLoading(true)
+    try {
+      const { error } = await supabase
+        .from('households')
+        .update({
+          name: household.name,
+          timezone: household.timezone,
+          preferred_grocery_store: household.preferred_store,
+        })
+        .eq('id', household.id)
+
+      if (error) throw error
+      toast.success('Settings saved!')
+    } catch (error) {
+      toast.error('Failed to save settings')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  async function handleUpgrade(tier: 'premium' | 'family') {
+    if (!household.id || !userEmail) {
+      toast.error('Please log in to upgrade')
+      return
+    }
+
+    setCheckoutLoading(tier)
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          householdId: household.id,
+          tier,
+          email: userEmail,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = data.url
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start checkout')
+    } finally {
+      setCheckoutLoading(null)
+    }
+  }
+
+  async function handleManageSubscription() {
+    if (!household.stripe_customer_id) {
+      toast.error('No active subscription found')
+      return
+    }
+
+    // Open Stripe Customer Portal
+    // For production, you'd create a portal session via API
+    toast.success('Opening subscription management...')
+    window.open('https://billing.stripe.com/p/login/test', '_blank')
   }
 
   const subscriptionInfo = {
@@ -102,7 +221,10 @@ export default function SettingsPage() {
               <Settings className="w-5 h-5" />
               <span className="font-medium">Settings</span>
             </Link>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Sign Out</span>
             </button>
@@ -158,16 +280,43 @@ export default function SettingsPage() {
               </ul>
 
               {household.subscription_tier === 'free' ? (
-                <button className="w-full py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors">
-                  Upgrade to Premium
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleUpgrade('premium')}
+                    disabled={checkoutLoading !== null}
+                    className="flex-1 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {checkoutLoading === 'premium' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : null}
+                    Upgrade to Premium
+                  </button>
+                  <button
+                    onClick={() => handleUpgrade('family')}
+                    disabled={checkoutLoading !== null}
+                    className="flex-1 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {checkoutLoading === 'family' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : null}
+                    Upgrade to Family
+                  </button>
+                </div>
               ) : (
                 <div className="flex gap-2">
-                  <button className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                  <button
+                    onClick={handleManageSubscription}
+                    className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <ExternalLink className="w-4 h-4" />
                     Manage Subscription
                   </button>
                   {household.subscription_tier === 'premium' && (
-                    <button className="flex-1 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors">
+                    <button
+                      onClick={() => handleUpgrade('family')}
+                      disabled={checkoutLoading !== null}
+                      className="flex-1 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
+                    >
                       Upgrade to Family
                     </button>
                   )}
@@ -210,6 +359,9 @@ export default function SettingsPage() {
                   <option value="America/Chicago">Central Time (CT)</option>
                   <option value="America/Denver">Mountain Time (MT)</option>
                   <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                  <option value="Europe/London">London (GMT)</option>
+                  <option value="Europe/Paris">Paris (CET)</option>
+                  <option value="Asia/Tokyo">Tokyo (JST)</option>
                 </select>
               </div>
               <div>
@@ -221,6 +373,28 @@ export default function SettingsPage() {
                   placeholder="e.g., Whole Foods, Costco, Trader Joe's"
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Content Creation Tools */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+                  <Palette className="w-5 h-5 text-pink-600" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-gray-900">Content Creation</h2>
+                  <p className="text-sm text-gray-500">Design & share your meal content</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              <ContentCreationBar />
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-sm text-gray-600 mb-3">Follow us on social media:</p>
+                <SocialLinks />
               </div>
             </div>
           </div>
@@ -349,8 +523,10 @@ export default function SettingsPage() {
           {/* Save Button */}
           <button
             onClick={handleSave}
-            className="w-full py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors"
+            disabled={isLoading}
+            className="w-full py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
+            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
             Save Changes
           </button>
         </div>

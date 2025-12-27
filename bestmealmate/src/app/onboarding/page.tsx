@@ -84,13 +84,33 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setIsLoading(true)
     try {
-      // TODO: Implement Supabase auth and data creation
-      // For now, simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      toast.success('Welcome to BestMealMate!')
-      router.push('/dashboard')
-    } catch (error) {
-      toast.error('Something went wrong. Please try again.')
+      const response = await fetch('/api/onboarding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          householdName,
+          familyMembers: familyMembers.filter(m => m.name.trim()),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Something went wrong')
+      }
+
+      if (data.emailConfirmationRequired) {
+        toast.success('Check your email to confirm your account!')
+        router.push('/login')
+      } else {
+        toast.success('Welcome to BestMealMate!')
+        router.push('/dashboard')
+        router.refresh()
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Something went wrong. Please try again.')
     } finally {
       setIsLoading(false)
     }
