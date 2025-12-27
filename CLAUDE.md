@@ -141,3 +141,27 @@ Currently no test framework configured. When adding tests:
 - Ensure all Stripe webhooks are configured for the correct events
 - Check RLS policies if queries return unexpected empty results
 - Verify CORS settings in Supabase for client-side requests
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+| Document | Description |
+|----------|-------------|
+| [docs/FILES_INDEX.md](docs/FILES_INDEX.md) | Master file index with all source files |
+| [docs/CODE_SHOWCASE.md](docs/CODE_SHOWCASE.md) | Detailed code examples by feature |
+| [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) | Complete API reference |
+| [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | Production deployment steps |
+| [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | End-user documentation |
+| [docs/FINAL_CHECKLIST.md](docs/FINAL_CHECKLIST.md) | Pre-launch verification checklist |
+
+## Code Statistics
+
+| Category | Files | Lines |
+|----------|-------|-------|
+| Frontend Pages | 10 | ~3,500 |
+| API Routes | 4 | ~235 |
+| Library/Utils | 2 | ~640 |
+| Database Schema | 1 | ~470 |
+| Config | 5 | ~180 |
+| **Total** | **22** | **~5,000** |
