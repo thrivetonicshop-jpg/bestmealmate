@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ChefHat,
@@ -95,23 +95,22 @@ export default function MealPlanPage() {
   const [ratingMealId, setRatingMealId] = useState<string | null>(null)
   const [selectedRating, setSelectedRating] = useState(0)
 
+  const loadSavedMeals = useCallback(async () => {
+    if (!household?.id) return
+    try {
+      const meals = await getSavedMeals(household.id)
+      setSavedMeals((meals as GeneratedMeal[]) || [])
+    } catch (error) {
+      console.error('Error loading saved meals:', error)
+    }
+  }, [household?.id])
+
   // Load saved meals on mount
   useEffect(() => {
     if (household?.id) {
       loadSavedMeals()
     }
-  }, [household?.id])
-
-  const loadSavedMeals = async () => {
-    if (!household?.id) return
-    try {
-      const meals = await getSavedMeals(household.id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setSavedMeals((meals as any[]) || [])
-    } catch (error) {
-      console.error('Error loading saved meals:', error)
-    }
-  }
+  }, [household?.id, loadSavedMeals])
 
   const generateMealPlan = async () => {
     setIsGenerating(true)

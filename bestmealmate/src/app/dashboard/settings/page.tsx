@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ChefHat,
@@ -19,18 +19,29 @@ import {
   Check,
   ChevronRight,
   Crown,
-  Loader2
+  Loader2,
+  Download,
+  Upload,
+  Moon,
+  Sun,
+  Monitor,
+  Save
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
+import { useAuth } from '@/lib/auth-context'
+import { saveUserPreferences, getUserPreferences, getLoginHistory, type UserPreferences, type LoginHistoryEntry } from '@/lib/supabase'
 
 export default function SettingsPage() {
-  const [household, setHousehold] = useState({
-    id: 'demo-household-id', // In real app, get from auth context
-    name: 'The Smith Family',
-    email: 'demo@example.com', // In real app, get from auth context
-    timezone: 'America/New_York',
-    preferred_store: 'Whole Foods',
-    subscription_tier: 'free' as 'free' | 'premium' | 'family'
+  const { user, household, signOut, exportUserData, createBackup } = useAuth()
+
+  const [preferences, setPreferences] = useState<UserPreferences>({
+    theme: 'system',
+    email_notifications: true,
+    push_notifications: true,
+    favorite_cuisines: [],
+    cooking_skill_level: 'intermediate',
+    max_prep_time_minutes: 60,
+    default_servings: 4,
   })
 
   const [notifications, setNotifications] = useState({
@@ -41,8 +52,67 @@ export default function SettingsPage() {
     push_notifications: true
   })
 
-  const [theme, setTheme] = useState('system')
   const [upgrading, setUpgrading] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [backingUp, setBackingUp] = useState(false)
+  const [loginHistory, setLoginHistory] = useState<LoginHistoryEntry[]>([])
+
+  const loadPreferences = useCallback(async () => {
+    if (!user?.id) return
+    try {
+      const data = await getUserPreferences(user.id)
+      if (data) {
+        setPreferences(prev => ({ ...prev, ...data }))
+        setNotifications({
+          expiry_reminders: true,
+          meal_reminders: true,
+          grocery_reminders: true,
+          email_notifications: data.email_notifications ?? true,
+          push_notifications: data.push_notifications ?? true,
+        })
+      }
+    } catch (error) {
+      console.error('Error loading preferences:', error)
+    }
+  }, [user?.id])
+
+  const loadLoginHistory = useCallback(async () => {
+    if (!user?.id) return
+    try {
+      const data = await getLoginHistory(user.id, 5)
+      setLoginHistory(data)
+    } catch (error) {
+      console.error('Error loading login history:', error)
+    }
+  }, [user?.id])
+
+  // Load preferences on mount
+  useEffect(() => {
+    if (user?.id) {
+      loadPreferences()
+      loadLoginHistory()
+    }
+  }, [user?.id, loadPreferences, loadLoginHistory])
+
+  // Apply theme
+  useEffect(() => {
+    const applyTheme = (theme: string) => {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark')
+      } else if (theme === 'light') {
+        document.documentElement.classList.remove('dark')
+      } else {
+        // System preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      }
+    }
+    applyTheme(preferences.theme || 'system')
+  }, [preferences.theme])
 
   async function handleUpgrade(tier: 'premium' | 'family') {
     setUpgrading(tier)
@@ -51,9 +121,9 @@ export default function SettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          householdId: household.id,
+          householdId: household?.id,
           tier: tier,
-          email: household.email,
+          email: user?.email,
         }),
       })
 
@@ -75,8 +145,56 @@ export default function SettingsPage() {
     }
   }
 
-  function handleSave() {
-    toast.success('Settings saved')
+  async function handleSave() {
+    if (!user?.id || !household?.id) return
+    setSaving(true)
+    try {
+      await saveUserPreferences(user.id, household.id, {
+        ...preferences,
+        email_notifications: notifications.email_notifications,
+        push_notifications: notifications.push_notifications,
+      })
+      toast.success('Settings saved')
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      toast.error('Failed to save settings')
+    }
+    setSaving(false)
+  }
+
+  async function handleExportData() {
+    setExporting(true)
+    try {
+      const data = await exportUserData()
+      if (data) {
+        const blob = new Blob([data], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `bestmealmate-export-${new Date().toISOString().split('T')[0]}.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        toast.success('Data exported successfully')
+      }
+    } catch (error) {
+      console.error('Error exporting data:', error)
+      toast.error('Failed to export data')
+    }
+    setExporting(false)
+  }
+
+  async function handleBackup() {
+    setBackingUp(true)
+    try {
+      await createBackup()
+      toast.success('Backup created successfully')
+    } catch (error) {
+      console.error('Error creating backup:', error)
+      toast.error('Failed to create backup')
+    }
+    setBackingUp(false)
   }
 
   const subscriptionInfo = {
@@ -97,15 +215,17 @@ export default function SettingsPage() {
     }
   }
 
+  const currentTier = household?.subscription_tier || 'free'
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Toaster position="top-right" />
 
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-200 p-4 hidden lg:block">
+      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4 hidden lg:block">
         <div className="flex items-center gap-2 mb-8">
           <ChefHat className="w-8 h-8 text-brand-600" />
-          <span className="text-xl font-bold text-gray-900">BestMealMate</span>
+          <span className="text-xl font-bold text-gray-900 dark:text-white">BestMealMate</span>
         </div>
 
         <nav className="space-y-1">
@@ -122,7 +242,7 @@ export default function SettingsPage() {
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                 item.active
                   ? 'bg-brand-50 text-brand-700'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
             >
               <item.icon className="w-5 h-5" />
@@ -132,12 +252,15 @@ export default function SettingsPage() {
         </nav>
 
         <div className="absolute bottom-4 left-4 right-4">
-          <div className="border-t border-gray-200 pt-4 space-y-1">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 space-y-1">
             <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2 bg-brand-50 text-brand-700 rounded-lg transition-colors">
               <Settings className="w-5 h-5" />
               <span className="font-medium">Settings</span>
             </Link>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Sign Out</span>
             </button>
@@ -149,50 +272,50 @@ export default function SettingsPage() {
       <main className="lg:ml-64 p-4 lg:p-8 pb-24 lg:pb-8">
         {/* Header */}
         <header className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Manage your account and preferences</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your account and preferences</p>
         </header>
 
         <div className="max-w-3xl space-y-6">
           {/* Subscription */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-brand-100 dark:bg-brand-900 rounded-lg flex items-center justify-center">
                   <Crown className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">Subscription</h2>
-                  <p className="text-sm text-gray-500">Manage your plan and billing</p>
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Subscription</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Manage your plan and billing</p>
                 </div>
               </div>
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm text-gray-500">Current Plan</p>
-                  <p className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    {subscriptionInfo[household.subscription_tier].name}
-                    {household.subscription_tier !== 'free' && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Current Plan</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                    {subscriptionInfo[currentTier as keyof typeof subscriptionInfo].name}
+                    {currentTier !== 'free' && (
                       <span className="text-xs px-2 py-0.5 bg-brand-100 text-brand-700 rounded-full">Active</span>
                     )}
                   </p>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {subscriptionInfo[household.subscription_tier].price}
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {subscriptionInfo[currentTier as keyof typeof subscriptionInfo].price}
                 </p>
               </div>
 
               <ul className="space-y-2 mb-6">
-                {subscriptionInfo[household.subscription_tier].features.map((feature, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-gray-600">
+                {subscriptionInfo[currentTier as keyof typeof subscriptionInfo].features.map((feature, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                     <Check className="w-4 h-4 text-green-500" />
                     {feature}
                   </li>
                 ))}
               </ul>
 
-              {household.subscription_tier === 'free' ? (
+              {currentTier === 'free' && (
                 <div className="space-y-2">
                   <button
                     onClick={() => handleUpgrade('premium')}
@@ -222,97 +345,63 @@ export default function SettingsPage() {
                       'Upgrade to Family - $14.99/mo'
                     )}
                   </button>
-                  <p className="text-xs text-gray-500 text-center">14-day free trial included</p>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <button className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                    Manage Subscription
-                  </button>
-                  {household.subscription_tier === 'premium' && (
-                    <button
-                      onClick={() => handleUpgrade('family')}
-                      disabled={upgrading !== null}
-                      className="flex-1 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {upgrading === 'family' ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        'Upgrade to Family'
-                      )}
-                    </button>
-                  )}
                 </div>
               )}
             </div>
           </div>
 
-          {/* Household Settings */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+          {/* Appearance / Theme */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-600" />
+                <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+                  <Palette className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">Household</h2>
-                  <p className="text-sm text-gray-500">General household settings</p>
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Appearance</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Customize how the app looks</p>
                 </div>
               </div>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Household Name</label>
-                <input
-                  type="text"
-                  value={household.name}
-                  onChange={(e) => setHousehold({ ...household, name: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-                <select
-                  value={household.timezone}
-                  onChange={(e) => setHousehold({ ...household, timezone: e.target.value })}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
-                >
-                  <option value="America/New_York">Eastern Time (ET)</option>
-                  <option value="America/Chicago">Central Time (CT)</option>
-                  <option value="America/Denver">Mountain Time (MT)</option>
-                  <option value="America/Los_Angeles">Pacific Time (PT)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Grocery Store</label>
-                <input
-                  type="text"
-                  value={household.preferred_store}
-                  onChange={(e) => setHousehold({ ...household, preferred_store: e.target.value })}
-                  placeholder="e.g., Whole Foods, Costco, Trader Joe's"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
-                />
+            <div className="p-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Theme</label>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: 'light', label: 'Light', icon: Sun },
+                  { id: 'dark', label: 'Dark', icon: Moon },
+                  { id: 'system', label: 'System', icon: Monitor },
+                ].map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => setPreferences({ ...preferences, theme: theme.id as 'light' | 'dark' | 'system' })}
+                    className={`flex flex-col items-center gap-2 px-4 py-4 rounded-xl font-medium transition-all ${
+                      preferences.theme === theme.id
+                        ? 'bg-brand-600 text-white ring-2 ring-brand-600 ring-offset-2'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <theme.icon className="w-6 h-6" />
+                    <span>{theme.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Notifications */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
                   <Bell className="w-5 h-5 text-orange-600" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">Notifications</h2>
-                  <p className="text-sm text-gray-500">Choose what alerts you receive</p>
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Notifications</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Choose what alerts you receive</p>
                 </div>
               </div>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
               {[
                 { key: 'expiry_reminders', label: 'Expiry Reminders', desc: 'Get notified when food is about to expire' },
                 { key: 'meal_reminders', label: 'Meal Reminders', desc: 'Daily reminders about planned meals' },
@@ -322,13 +411,13 @@ export default function SettingsPage() {
               ].map((item) => (
                 <div key={item.key} className="flex items-center justify-between p-4">
                   <div>
-                    <p className="font-medium text-gray-900">{item.label}</p>
-                    <p className="text-sm text-gray-500">{item.desc}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{item.label}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{item.desc}</p>
                   </div>
                   <button
                     onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key as keyof typeof notifications] })}
                     className={`relative w-12 h-6 rounded-full transition-colors ${
-                      notifications[item.key as keyof typeof notifications] ? 'bg-brand-600' : 'bg-gray-300'
+                      notifications[item.key as keyof typeof notifications] ? 'bg-brand-600' : 'bg-gray-300 dark:bg-gray-600'
                     }`}
                   >
                     <span
@@ -342,60 +431,106 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Appearance */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
+          {/* Data & Privacy */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                  <Palette className="w-5 h-5 text-indigo-600" />
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">Appearance</h2>
-                  <p className="text-sm text-gray-500">Customize how the app looks</p>
+                  <h2 className="font-semibold text-gray-900 dark:text-white">Data & Privacy</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Manage your data</p>
                 </div>
               </div>
             </div>
-            <div className="p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-              <div className="flex gap-2">
-                {['light', 'dark', 'system'].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTheme(t)}
-                    className={`flex-1 px-4 py-2 rounded-lg font-medium capitalize transition-colors ${
-                      theme === t
-                        ? 'bg-brand-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+            <div className="p-6 space-y-4">
+              <button
+                onClick={handleExportData}
+                disabled={exporting}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <div className="flex items-center gap-3">
+                  <Download className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Export My Data</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Download all your data as JSON</p>
+                  </div>
+                </div>
+                {exporting ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
+
+              <button
+                onClick={handleBackup}
+                disabled={backingUp}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <div className="flex items-center gap-3">
+                  <Upload className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <div className="text-left">
+                    <p className="font-medium text-gray-900 dark:text-white">Create Backup</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Save a snapshot of your profile</p>
+                  </div>
+                </div>
+                {backingUp ? (
+                  <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="divide-y divide-gray-100">
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+          {/* Login History */}
+          {loginHistory.length > 0 && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-3">
-                  <Shield className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium text-gray-900">Privacy & Security</span>
+                  <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold text-gray-900 dark:text-white">Recent Logins</h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Your login activity</p>
+                  </div>
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400" />
-              </button>
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+              </div>
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                {loginHistory.map((login) => (
+                  <div key={login.id} className="px-6 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                        {login.device_type || 'Unknown'} • {login.login_method || 'Email'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(login.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <Check className="w-4 h-4 text-green-500" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Links */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium text-gray-900">Payment Methods</span>
+                  <span className="font-medium text-gray-900 dark:text-white">Payment Methods</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </button>
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium text-gray-900">Language & Region</span>
+                  <span className="font-medium text-gray-900 dark:text-white">Language & Region</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </button>
@@ -403,10 +538,10 @@ export default function SettingsPage() {
           </div>
 
           {/* Danger Zone */}
-          <div className="bg-white rounded-xl border border-red-200 overflow-hidden">
-            <div className="p-6 border-b border-red-100 bg-red-50">
-              <h2 className="font-semibold text-red-700">Danger Zone</h2>
-              <p className="text-sm text-red-600">Irreversible actions</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-800 overflow-hidden">
+            <div className="p-6 border-b border-red-100 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+              <h2 className="font-semibold text-red-700 dark:text-red-400">Danger Zone</h2>
+              <p className="text-sm text-red-600 dark:text-red-400">Irreversible actions</p>
             </div>
             <div className="p-6 space-y-4">
               <button className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium">
@@ -423,15 +558,26 @@ export default function SettingsPage() {
           {/* Save Button */}
           <button
             onClick={handleSave}
-            className="w-full py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors"
+            disabled={saving}
+            className="w-full py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Save Changes
+            {saving ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                Save Changes
+              </>
+            )}
           </button>
         </div>
       </main>
 
       {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 lg:hidden">
         <div className="flex items-center justify-around py-2">
           {[
             { icon: Calendar, label: 'Plan', href: '/dashboard', active: false },

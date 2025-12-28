@@ -38,6 +38,13 @@ export function isSupabaseConfigured(): boolean {
   return isValidSupabaseUrl(supabaseUrl) && supabaseAnonKey !== 'placeholder-key'
 }
 
+// Helper for tables not in auto-generated types (e.g., user_preferences, email_subscribers, etc.)
+// This allows calling .from() on tables that exist in the DB but not in the typed schema
+type AnyTableClient = {
+  from: (table: string) => ReturnType<typeof supabase.from>
+}
+const supabaseUntyped = supabase as unknown as AnyTableClient
+
 // Helper function for client-side use with validation
 export function getSupabase(): SupabaseClient<Database> {
   if (!isSupabaseConfigured() && isBrowser) {
@@ -303,7 +310,7 @@ export interface EmailSubscriber {
  * Add email to subscriber list
  */
 export async function subscribeEmail(subscriber: EmailSubscriber) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUntyped
     .from('email_subscribers')
     .upsert({
       email: subscriber.email.toLowerCase().trim(),
@@ -329,7 +336,7 @@ export async function subscribeEmail(subscriber: EmailSubscriber) {
  * Unsubscribe email from list
  */
 export async function unsubscribeEmail(email: string) {
-  const { error } = await supabase
+  const { error } = await supabaseUntyped
     .from('email_subscribers')
     .update({
       is_subscribed: false,
@@ -370,8 +377,8 @@ export interface UserPreferences {
 /**
  * Get user preferences
  */
-export async function getUserPreferences(userId: string) {
-  const { data, error } = await supabase
+export async function getUserPreferences(userId: string): Promise<UserPreferences | null> {
+  const { data, error } = await supabaseUntyped
     .from('user_preferences')
     .select('*')
     .eq('user_id', userId)
@@ -381,14 +388,14 @@ export async function getUserPreferences(userId: string) {
     console.error('Error fetching user preferences:', error)
   }
 
-  return data
+  return data as UserPreferences | null
 }
 
 /**
  * Update or create user preferences
  */
 export async function saveUserPreferences(userId: string, householdId: string, preferences: UserPreferences) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUntyped
     .from('user_preferences')
     .upsert({
       user_id: userId,
@@ -413,7 +420,7 @@ export async function saveUserPreferences(userId: string, householdId: string, p
  * Update AI memory for a user (what the AI remembers about them)
  */
 export async function updateAIMemory(userId: string, memory: Record<string, unknown>) {
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseUntyped
     .from('user_preferences')
     .select('ai_memory')
     .eq('user_id', userId)
@@ -425,7 +432,7 @@ export async function updateAIMemory(userId: string, memory: Record<string, unkn
     last_updated: new Date().toISOString(),
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseUntyped
     .from('user_preferences')
     .update({ ai_memory: updatedMemory })
     .eq('user_id', userId)
@@ -441,9 +448,14 @@ export async function updateAIMemory(userId: string, memory: Record<string, unkn
 // ============================================
 
 export interface GeneratedMeal {
+  id?: string
   household_id: string
   user_id?: string
   name: string
+  is_saved?: boolean
+  is_cooked?: boolean
+  rating?: number
+  created_at?: string
   description?: string
   meal_type?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'any'
   cuisine?: string
@@ -465,8 +477,8 @@ export interface GeneratedMeal {
 /**
  * Save a generated meal to Supabase
  */
-export async function saveGeneratedMeal(meal: GeneratedMeal) {
-  const { data, error } = await supabase
+export async function saveGeneratedMeal(meal: GeneratedMeal): Promise<GeneratedMeal> {
+  const { data, error } = await supabaseUntyped
     .from('ai_generated_meals')
     .insert({
       ...meal,
@@ -482,14 +494,14 @@ export async function saveGeneratedMeal(meal: GeneratedMeal) {
     throw error
   }
 
-  return data
+  return data as unknown as GeneratedMeal
 }
 
 /**
  * Get saved generated meals for a household
  */
 export async function getSavedMeals(householdId: string, limit: number = 50) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUntyped
     .from('ai_generated_meals')
     .select('*')
     .eq('household_id', householdId)
@@ -509,7 +521,7 @@ export async function getSavedMeals(householdId: string, limit: number = 50) {
  * Rate a generated meal
  */
 export async function rateMeal(mealId: string, rating: number, notes?: string) {
-  const { error } = await supabase
+  const { error } = await supabaseUntyped
     .from('ai_generated_meals')
     .update({
       rating,
@@ -528,7 +540,7 @@ export async function rateMeal(mealId: string, rating: number, notes?: string) {
  * Mark a meal as cooked
  */
 export async function markMealCooked(mealId: string) {
-  const { error } = await supabase
+  const { error } = await supabaseUntyped
     .from('ai_generated_meals')
     .update({
       is_cooked: true,
@@ -547,7 +559,7 @@ export async function markMealCooked(mealId: string) {
  * Delete a generated meal
  */
 export async function deleteGeneratedMeal(mealId: string) {
-  const { error } = await supabase
+  const { error } = await supabaseUntyped
     .from('ai_generated_meals')
     .delete()
     .eq('id', mealId)
@@ -584,7 +596,7 @@ export async function createProfileBackup(
     backup_timestamp: new Date().toISOString(),
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUntyped
     .from('user_profile_backups')
     .insert({
       user_id: userId,
@@ -608,7 +620,7 @@ export async function createProfileBackup(
  * Get latest profile backup for a user
  */
 export async function getLatestBackup(userId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseUntyped
     .from('user_profile_backups')
     .select('*')
     .eq('user_id', userId)
@@ -646,7 +658,7 @@ export async function trackLogin(loginInfo: LoginInfo) {
   if (/mobile/i.test(userAgent)) deviceType = 'mobile'
   else if (/tablet/i.test(userAgent)) deviceType = 'tablet'
 
-  const { error } = await supabase
+  const { error } = await supabaseUntyped
     .from('login_history')
     .insert({
       user_id: loginInfo.user_id,
@@ -664,11 +676,21 @@ export async function trackLogin(loginInfo: LoginInfo) {
   }
 }
 
+export interface LoginHistoryEntry {
+  id: string
+  user_id: string
+  created_at: string
+  device_type: string
+  login_method: string
+  ip_address?: string
+  user_agent?: string
+}
+
 /**
  * Get login history for a user
  */
-export async function getLoginHistory(userId: string, limit: number = 10) {
-  const { data, error } = await supabase
+export async function getLoginHistory(userId: string, limit: number = 10): Promise<LoginHistoryEntry[]> {
+  const { data, error } = await supabaseUntyped
     .from('login_history')
     .select('*')
     .eq('user_id', userId)
@@ -679,5 +701,185 @@ export async function getLoginHistory(userId: string, limit: number = 10) {
     console.error('Error fetching login history:', error)
   }
 
-  return data || []
+  return (data || []) as unknown as LoginHistoryEntry[]
+}
+
+// ============================================
+// GROCERY LIST HELPERS
+// ============================================
+
+export interface GroceryItem {
+  id?: string
+  grocery_list_id?: string
+  name: string
+  quantity: string
+  aisle: string
+  is_purchased: boolean
+  notes?: string
+}
+
+export interface GroceryList {
+  id?: string
+  household_id: string
+  name: string
+  status: 'active' | 'shopping' | 'completed'
+  items?: GroceryItem[]
+  created_at?: string
+}
+
+/**
+ * Get all grocery lists for a household
+ */
+export async function getGroceryLists(householdId: string): Promise<Array<GroceryList & { grocery_items: GroceryItem[] }>> {
+  const { data, error } = await supabase
+    .from('grocery_lists')
+    .select('*, grocery_items(*)')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching grocery lists:', error)
+    throw error
+  }
+
+  // Cast to proper type since Supabase auto-generated types don't include the relation
+  return (data || []) as unknown as Array<GroceryList & { grocery_items: GroceryItem[] }>
+}
+
+/**
+ * Create a new grocery list
+ */
+export async function createGroceryList(list: GroceryList) {
+  const { data, error } = await supabase
+    .from('grocery_lists')
+    .insert({
+      household_id: list.household_id,
+      name: list.name,
+      status: list.status || 'active',
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating grocery list:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Update a grocery list
+ */
+export async function updateGroceryList(listId: string, updates: Partial<GroceryList>) {
+  const { error } = await supabase
+    .from('grocery_lists')
+    .update(updates)
+    .eq('id', listId)
+
+  if (error) {
+    console.error('Error updating grocery list:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete a grocery list
+ */
+export async function deleteGroceryList(listId: string) {
+  const { error } = await supabase
+    .from('grocery_lists')
+    .delete()
+    .eq('id', listId)
+
+  if (error) {
+    console.error('Error deleting grocery list:', error)
+    throw error
+  }
+}
+
+/**
+ * Add an item to a grocery list
+ */
+export async function addGroceryItem(listId: string, item: GroceryItem) {
+  const { data, error } = await supabaseUntyped
+    .from('grocery_items')
+    .insert({
+      grocery_list_id: listId,
+      name: item.name,
+      quantity: item.quantity,
+      aisle: item.aisle || 'Other',
+      is_purchased: item.is_purchased || false,
+      notes: item.notes,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error adding grocery item:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Update a grocery item
+ */
+export async function updateGroceryItem(itemId: string, updates: Partial<GroceryItem>) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .update(updates)
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Error updating grocery item:', error)
+    throw error
+  }
+}
+
+/**
+ * Toggle item purchased status
+ */
+export async function toggleGroceryItemPurchased(itemId: string, isPurchased: boolean) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .update({ is_purchased: isPurchased })
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Error toggling grocery item:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete a grocery item
+ */
+export async function deleteGroceryItem(itemId: string) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .delete()
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Error deleting grocery item:', error)
+    throw error
+  }
+}
+
+/**
+ * Clear all purchased items from a list
+ */
+export async function clearPurchasedItems(listId: string) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .delete()
+    .eq('grocery_list_id', listId)
+    .eq('is_purchased', true)
+
+  if (error) {
+    console.error('Error clearing purchased items:', error)
+    throw error
+  }
 }
