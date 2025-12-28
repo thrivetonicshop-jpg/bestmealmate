@@ -25,7 +25,12 @@ import {
   Award,
   BadgeCheck,
   Trophy,
-  ThumbsUp
+  ThumbsUp,
+  XCircle,
+  Watch,
+  Camera,
+  Smartphone,
+  DollarSign
 } from 'lucide-react'
 
 export default function HomePage() {
@@ -73,39 +78,84 @@ export default function HomePage() {
   const features = [
     {
       icon: Users,
-      title: "Family Profiles",
-      desc: "Each person gets their own profile with allergies, restrictions, and preferences. AI plans meals that work for everyone.",
-      gradient: "from-emerald-500 to-teal-500"
+      title: "Unlimited Family Profiles",
+      desc: "Dad's keto, kid's nut allergy, grandma's low-sodium — all handled. Unlike apps that only support one diet at a time.",
+      gradient: "from-emerald-500 to-teal-500",
+      badge: "Unlike Mealime"
     },
     {
       icon: Refrigerator,
-      title: "Smart Pantry",
-      desc: "Track your fridge inventory. We'll prioritize expiring ingredients and never add staples you already have.",
-      gradient: "from-blue-500 to-cyan-500"
+      title: "Smart Pantry + Expiry Alerts",
+      desc: "Know what's expiring and get recipe suggestions to use it first. Grocery list auto-excludes what you already have.",
+      gradient: "from-blue-500 to-cyan-500",
+      badge: "Unlike Eat This Much"
     },
     {
       icon: Sparkles,
-      title: "AI Chef",
-      desc: "Open the app at 5pm. Get tonight's dinner suggestion instantly. No decisions required.",
-      gradient: "from-purple-500 to-pink-500"
+      title: "True AI Chef",
+      desc: "Not just recipe search — real AI that understands your whole family's needs and suggests meals everyone can eat together.",
+      gradient: "from-purple-500 to-pink-500",
+      badge: "Unlike Paprika"
     },
     {
       icon: ShoppingCart,
-      title: "Smart Grocery List",
-      desc: "Auto-generated, consolidated, organized by aisle. One-tap ordering with your favorite grocery service.",
-      gradient: "from-orange-500 to-amber-500"
+      title: "Smart Grocery Merging",
+      desc: "2 onions from recipe A + 1 from recipe B = 3 onions. Organized by aisle. List stays intact when you edit your plan.",
+      gradient: "from-orange-500 to-amber-500",
+      badge: "Unlike Mealime"
     },
     {
       icon: Calendar,
-      title: "Schedule-Aware",
-      desc: "Busy Tuesday? We'll suggest a 20-minute meal. Sunday? Time for batch cooking.",
-      gradient: "from-rose-500 to-pink-500"
+      title: "Any Serving Size",
+      desc: "1, 3, 5, 7 — any number works. Not locked to 2/4/6 like other apps. Perfect for odd-sized families.",
+      gradient: "from-rose-500 to-pink-500",
+      badge: "Unlike Mealime"
     },
     {
       icon: Leaf,
-      title: "Zero Waste",
-      desc: "Track what you throw away. Watch your waste go down. Save money every month.",
-      gradient: "from-green-500 to-emerald-500"
+      title: "Waste Tracking Built-In",
+      desc: "See exactly how much food (and money) you're saving. Most apps make you download a separate waste tracker.",
+      gradient: "from-green-500 to-emerald-500",
+      badge: "Unlike BigOven"
+    },
+  ]
+
+  const competitorComparison = [
+    { feature: "Multiple family dietary profiles", us: true, mealime: false, yummly: false, paprika: false },
+    { feature: "AI understands whole family context", us: true, mealime: false, yummly: false, paprika: false },
+    { feature: "Smart pantry with expiry tracking", us: true, mealime: false, yummly: false, paprika: true },
+    { feature: "Grocery list merges ingredients", us: true, mealime: false, yummly: true, paprika: true },
+    { feature: "Any serving size (not just 2/4/6)", us: true, mealime: false, yummly: true, paprika: true },
+    { feature: "Wearable health sync", us: true, mealime: false, yummly: false, paprika: false },
+    { feature: "AI food scanner (camera)", us: true, mealime: false, yummly: false, paprika: false },
+    { feature: "No ads in free tier", us: true, mealime: true, yummly: false, paprika: true },
+    { feature: "Easy cancellation", us: true, mealime: true, yummly: false, paprika: true },
+  ]
+
+  const uniqueFeatures = [
+    {
+      icon: Users,
+      title: "Whole-Family AI",
+      desc: "The only app where AI plans meals considering everyone's diet simultaneously — not just filtering recipes.",
+      color: "brand"
+    },
+    {
+      icon: Watch,
+      title: "Health Wearable Sync",
+      desc: "Connect Apple Health, Fitbit, or Garmin. Calorie goals sync automatically with your meal plans.",
+      color: "purple"
+    },
+    {
+      icon: Camera,
+      title: "AI Food Scanner",
+      desc: "Point your camera at groceries or your fridge. AI identifies items and adds them to your pantry instantly.",
+      color: "blue"
+    },
+    {
+      icon: Smartphone,
+      title: "Mobile-First Design",
+      desc: "Built for phones first, not desktop. Plan meals on the go without clunky interfaces.",
+      color: "green"
     },
   ]
 
@@ -468,11 +518,131 @@ export default function HomePage() {
                 key={i}
                 className="group relative p-8 rounded-3xl bg-white border border-gray-100 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1"
               >
+                {item.badge && (
+                  <span className="absolute top-4 right-4 px-2 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded-full">
+                    {item.badge}
+                  </span>
+                )}
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform`}>
                   <item.icon className="w-7 h-7 text-white" />
                 </div>
                 <h3 className="font-bold text-gray-900 text-xl mb-3">{item.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Switch Section - Competitor Comparison */}
+      <section className="py-20 lg:py-28 bg-gray-900 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/20 text-brand-400 text-sm font-medium mb-4">
+              <TrendingDown className="w-4 h-4" />
+              Why Families Switch
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+              Tired of apps that don&apos;t <span className="text-gradient">get it?</span>
+            </h2>
+            <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+              Other apps handle one person. BestMealMate handles your whole family.
+            </p>
+          </div>
+
+          {/* Comparison Table */}
+          <div className="bg-gray-800 rounded-3xl overflow-hidden border border-gray-700">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left p-4 text-gray-400 font-medium">Feature</th>
+                    <th className="p-4 text-center">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-500 text-white rounded-full text-sm font-bold">
+                        <ChefHat className="w-4 h-4" />
+                        Us
+                      </div>
+                    </th>
+                    <th className="p-4 text-center text-gray-500 text-sm">Mealime</th>
+                    <th className="p-4 text-center text-gray-500 text-sm">Yummly</th>
+                    <th className="p-4 text-center text-gray-500 text-sm">Paprika</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {competitorComparison.map((row, i) => (
+                    <tr key={i} className={i < competitorComparison.length - 1 ? 'border-b border-gray-700/50' : ''}>
+                      <td className="p-4 text-white text-sm">{row.feature}</td>
+                      <td className="p-4 text-center">
+                        {row.us ? (
+                          <Check className="w-5 h-5 text-green-400 mx-auto" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-gray-600 mx-auto" />
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        {row.mealime ? (
+                          <Check className="w-5 h-5 text-gray-500 mx-auto" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-gray-600 mx-auto" />
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        {row.yummly ? (
+                          <Check className="w-5 h-5 text-gray-500 mx-auto" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-gray-600 mx-auto" />
+                        )}
+                      </td>
+                      <td className="p-4 text-center">
+                        {row.paprika ? (
+                          <Check className="w-5 h-5 text-gray-500 mx-auto" />
+                        ) : (
+                          <XCircle className="w-5 h-5 text-gray-600 mx-auto" />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Switch CTA */}
+          <div className="mt-12 text-center">
+            <p className="text-gray-400 mb-6">Ready to try something that actually works for your whole family?</p>
+            <Link href="/onboarding" className="inline-flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-colors">
+              Switch to BestMealMate
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Unique Features - What Only We Have */}
+      <section className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-brand-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium mb-4">
+              <Sparkles className="w-4 h-4" />
+              Exclusive Features
+            </div>
+            <h2 className="section-title">What only BestMealMate has</h2>
+            <p className="section-subtitle">
+              Features you won&apos;t find in any other meal planning app
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {uniqueFeatures.map((feature, i) => (
+              <div key={i} className="relative bg-white rounded-2xl p-6 border-2 border-dashed border-gray-200 hover:border-brand-400 transition-colors group">
+                <div className="absolute -top-3 -right-3 w-8 h-8 bg-gradient-to-br from-brand-500 to-brand-600 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg">
+                  NEW
+                </div>
+                <div className={`w-12 h-12 rounded-xl bg-${feature.color}-100 flex items-center justify-center mb-4`}>
+                  <feature.icon className={`w-6 h-6 text-${feature.color}-600`} />
+                </div>
+                <h3 className="font-bold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.desc}</p>
               </div>
             ))}
           </div>
