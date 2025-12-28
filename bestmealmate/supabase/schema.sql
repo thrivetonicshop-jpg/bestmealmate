@@ -468,3 +468,101 @@ INSERT INTO ingredients (name, category, default_unit, avg_shelf_life_days) VALU
 ('Avocado', 'produce', 'whole', 4),
 ('Banana', 'produce', 'whole', 5),
 ('Apple', 'produce', 'whole', 21);
+
+-- ============================================
+-- WEARABLE DEVICE CONNECTIONS
+-- ============================================
+CREATE TABLE wearable_connections (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  family_member_id UUID REFERENCES family_members(id) ON DELETE CASCADE,
+  provider VARCHAR(50) NOT NULL CHECK (provider IN ('apple_health', 'fitbit', 'garmin', 'google_fit', 'samsung_health')),
+  access_token TEXT,
+  refresh_token TEXT,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN DEFAULT TRUE,
+  last_sync_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(family_member_id, provider)
+);
+
+-- ============================================
+-- HEALTH METRICS (from wearable devices)
+-- ============================================
+CREATE TABLE health_metrics (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  family_member_id UUID REFERENCES family_members(id) ON DELETE CASCADE,
+  wearable_connection_id UUID REFERENCES wearable_connections(id) ON DELETE SET NULL,
+  metric_type VARCHAR(50) NOT NULL CHECK (metric_type IN (
+    'steps', 'calories_burned', 'active_minutes', 'heart_rate', 'heart_rate_resting',
+    'sleep_hours', 'sleep_quality', 'weight', 'body_fat_percentage', 'water_intake',
+    'distance_km', 'floors_climbed'
+  )),
+  value DECIMAL(10,2) NOT NULL,
+  unit VARCHAR(20),
+  recorded_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  source VARCHAR(50),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
+-- DAILY HEALTH SUMMARIES (aggregated data)
+-- ============================================
+CREATE TABLE daily_health_summaries (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  family_member_id UUID REFERENCES family_members(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  steps INTEGER,
+  calories_burned INTEGER,
+  active_minutes INTEGER,
+  sleep_hours DECIMAL(4,2),
+  avg_heart_rate INTEGER,
+  resting_heart_rate INTEGER,
+  water_intake_ml INTEGER,
+  weight_kg DECIMAL(5,2),
+  body_fat_percentage DECIMAL(4,1),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(family_member_id, date)
+);
+
+-- Indexes for wearable tables
+CREATE INDEX idx_wearable_connections_member ON wearable_connections(family_member_id);
+CREATE INDEX idx_health_metrics_member ON health_metrics(family_member_id);
+CREATE INDEX idx_health_metrics_recorded ON health_metrics(recorded_at);
+CREATE INDEX idx_health_metrics_type ON health_metrics(metric_type);
+CREATE INDEX idx_daily_health_summaries_member ON daily_health_summaries(family_member_id);
+CREATE INDEX idx_daily_health_summaries_date ON daily_health_summaries(date);
+
+-- RLS for wearable tables
+ALTER TABLE wearable_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE health_metrics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_health_summaries ENABLE ROW LEVEL SECURITY;
+
+-- Policies for wearable connections
+CREATE POLICY "Users can manage own wearable connections" ON wearable_connections
+  FOR ALL USING (
+    family_member_id IN (
+      SELECT id FROM family_members WHERE user_id = auth.uid()
+    )
+  );
+
+-- Policies for health metrics
+CREATE POLICY "Users can manage own health metrics" ON health_metrics
+  FOR ALL USING (
+    family_member_id IN (
+      SELECT id FROM family_members WHERE user_id = auth.uid()
+    )
+  );
+
+-- Policies for daily health summaries
+CREATE POLICY "Users can manage own health summaries" ON daily_health_summaries
+  FOR ALL USING (
+    family_member_id IN (
+      SELECT id FROM family_members WHERE user_id = auth.uid()
+    )
+  );
+
+-- Triggers for updated_at
+CREATE TRIGGER update_wearable_connections_updated_at BEFORE UPDATE ON wearable_connections FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+CREATE TRIGGER update_daily_health_summaries_updated_at BEFORE UPDATE ON daily_health_summaries FOR EACH ROW EXECUTE FUNCTION update_updated_at();
