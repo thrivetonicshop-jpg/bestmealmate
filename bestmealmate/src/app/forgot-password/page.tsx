@@ -3,18 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ChefHat, Mail, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react'
-import { createBrowserClient } from '@supabase/ssr'
+import { supabase } from '@/lib/supabase'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState('')
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

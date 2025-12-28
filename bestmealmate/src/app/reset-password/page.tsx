@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ChefHat, Lock, Eye, EyeOff, CheckCircle, Loader2, AlertCircle } from 'lucide-react'
-import { createBrowserClient } from '@supabase/ssr'
+import { supabase } from '@/lib/supabase'
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
@@ -17,11 +17,6 @@ export default function ResetPasswordPage() {
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
   const router = useRouter()
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
-
   useEffect(() => {
     // Check if user has a valid session from the reset link
     const checkSession = async () => {
@@ -29,7 +24,7 @@ export default function ResetPasswordPage() {
       setIsValidSession(!!session)
     }
     checkSession()
-  }, [supabase.auth])
+  }, [])
 
   const validatePassword = (pwd: string) => {
     const minLength = pwd.length >= 8
