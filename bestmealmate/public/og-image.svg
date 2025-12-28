@@ -1,15 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" fill="none">
-  <!-- Background gradient -->
   <defs>
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#f0fdf4"/>
       <stop offset="100%" style="stop-color:#dcfce7"/>
+    </linearGradient>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
     </linearGradient>
     <linearGradient id="aiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#a855f7"/>
       <stop offset="100%" style="stop-color:#ec4899"/>
     </linearGradient>
   </defs>
+
   <rect width="1200" height="630" fill="url(#bgGradient)"/>
 
   <!-- Decorative circles -->
@@ -19,37 +23,36 @@
   <!-- Logo Icon -->
   <g transform="translate(100, 165)">
     <!-- Green background -->
-    <rect width="300" height="300" rx="60" fill="#22c55e"/>
+    <rect width="300" height="300" rx="60" fill="url(#iconGrad)"/>
 
-    <!-- Plate -->
-    <circle cx="150" cy="150" r="110" fill="white" opacity="0.95"/>
+    <!-- Fork (left) -->
+    <g transform="translate(60, 50)">
+      <rect x="0" y="0" width="14" height="130" rx="7" fill="white"/>
+      <rect x="-14" y="0" width="8" height="45" rx="4" fill="white"/>
+      <rect x="20" y="0" width="8" height="45" rx="4" fill="white"/>
+    </g>
 
-    <!-- Food -->
-    <ellipse cx="150" cy="140" rx="60" ry="40" fill="#fbbf24"/>
-    <ellipse cx="150" cy="130" rx="45" ry="30" fill="#fcd34d"/>
+    <!-- Knife (right) -->
+    <g transform="translate(210, 50)">
+      <path d="M0 0 L28 0 L28 40 C28 55 14 65 14 65 L14 130 L0 130 L0 65 C0 65 0 55 0 40 Z" fill="white"/>
+    </g>
 
-    <!-- Vegetables -->
-    <circle cx="110" cy="190" r="20" fill="#22c55e"/>
-    <circle cx="190" cy="190" r="20" fill="#22c55e"/>
-    <circle cx="150" cy="210" r="15" fill="#16a34a"/>
-
-    <!-- Steam -->
-    <path d="M120 50 Q115 30 120 15" stroke="white" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6"/>
-    <path d="M150 40 Q145 20 150 5" stroke="white" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6"/>
-    <path d="M180 50 Q175 30 180 15" stroke="white" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6"/>
+    <!-- Center heart -->
+    <circle cx="150" cy="180" r="65" fill="white" opacity="0.95"/>
+    <path d="M150 150 C138 130 112 138 112 162 C112 186 150 220 150 220 C150 220 188 186 188 162 C188 138 162 130 150 150" fill="#ef4444"/>
 
     <!-- AI sparkle badge -->
-    <circle cx="250" cy="50" r="40" fill="url(#aiGradient)"/>
-    <path d="M250 25 L254 44 L273 47 L254 51 L250 70 L246 51 L227 47 L246 44 Z" fill="white"/>
+    <circle cx="260" cy="40" r="40" fill="url(#aiGradient)"/>
+    <path d="M260 15 L265 35 L285 40 L265 45 L260 65 L255 45 L235 40 L255 35 Z" fill="white"/>
   </g>
 
   <!-- Text -->
-  <text x="480" y="260" font-family="system-ui, -apple-system, sans-serif" font-size="90" font-weight="800" fill="#111827">Best<tspan fill="#22c55e">Meal</tspan>Mate</text>
+  <text x="480" y="280" font-family="system-ui, -apple-system, sans-serif" font-size="90" font-weight="800" fill="#111827">Best<tspan fill="#22c55e">Meal</tspan>Mate</text>
 
-  <text x="480" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="36" fill="#4b5563">AI-Powered Meal Planning for Real Families</text>
+  <text x="480" y="360" font-family="system-ui, -apple-system, sans-serif" font-size="36" fill="#4b5563">AI-Powered Meal Planning for Real Families</text>
 
   <!-- Feature pills -->
-  <g transform="translate(480, 400)">
+  <g transform="translate(480, 420)">
     <rect x="0" y="0" width="150" height="50" rx="25" fill="#22c55e"/>
     <text x="75" y="33" font-family="system-ui, sans-serif" font-size="18" font-weight="600" fill="white" text-anchor="middle">All Diets</text>
 
@@ -61,5 +64,5 @@
   </g>
 
   <!-- URL -->
-  <text x="480" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#22c55e" font-weight="600">www.bestmealmate.com</text>
+  <text x="480" y="560" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#22c55e" font-weight="600">www.bestmealmate.com</text>
 </svg>
