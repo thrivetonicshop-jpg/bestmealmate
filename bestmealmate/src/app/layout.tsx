@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import Script from 'next/script'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/lib/auth-context'
 import './globals.css'
@@ -360,12 +359,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        {/* Google AdSense - in head for crawler verification */}
-        <Script
-          id="google-adsense"
+        {/* Google AdSense */}
+        <script
+          async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3073911588578821"
           crossOrigin="anonymous"
-          strategy="beforeInteractive"
         />
       </head>
       <body className="min-h-screen bg-white antialiased">
