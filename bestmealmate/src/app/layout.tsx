@@ -360,15 +360,15 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-      </head>
-      <body className="min-h-screen bg-white antialiased">
-        {/* Google AdSense */}
+        {/* Google AdSense - in head for crawler verification */}
         <Script
-          async
+          id="google-adsense"
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3073911588578821"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
         />
+      </head>
+      <body className="min-h-screen bg-white antialiased">
         <AuthProvider>
           {children}
           <Toaster
