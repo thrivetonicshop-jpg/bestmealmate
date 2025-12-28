@@ -1,6 +1,6 @@
 {
-  "installCommand": "npm install --prefix bestmealmate",
-  "buildCommand": "npm run build --prefix bestmealmate",
+  "installCommand": "cd bestmealmate && npm install",
+  "buildCommand": "cd bestmealmate && npm run build",
   "outputDirectory": "bestmealmate/.next",
   "framework": "nextjs"
 }
