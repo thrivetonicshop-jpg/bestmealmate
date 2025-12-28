@@ -837,7 +837,7 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="text-center sm:text-left">
                 <h4 className="font-semibold text-white mb-1">Follow us for recipes & tips</h4>
-                <p className="text-gray-400 text-sm">Join our community of 50,000+ families</p>
+                <p className="text-gray-400 text-sm">Join our community of 50,000+ families · <Link href="/privacy" className="hover:text-white underline">Privacy Policy</Link></p>
               </div>
               <div className="flex items-center gap-4">
                 <a href="https://x.com/bestmealmate" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors group">
