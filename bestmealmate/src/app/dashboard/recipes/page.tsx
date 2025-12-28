@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ChefHat,
   Calendar,
@@ -477,10 +478,11 @@ export default function RecipesPage() {
                   className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-card-hover hover:border-gray-200 transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-56 overflow-hidden">
-                    <img
+                    <Image
                       src={recipe.image_url}
                       alt={recipe.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
