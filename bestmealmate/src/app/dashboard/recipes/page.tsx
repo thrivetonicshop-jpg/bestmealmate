@@ -281,7 +281,7 @@ export default function RecipesPage() {
               <Sparkles className="w-5 h-5" />
               <span className="font-semibold">AI Recipe Finder</span>
             </div>
-            <p className="text-sm text-white/80 mb-3">Tell me what you're craving and I'll find the perfect recipe!</p>
+            <p className="text-sm text-white/80 mb-3">Tell me what you&apos;re craving and I&apos;ll find the perfect recipe!</p>
             <button className="w-full py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
               Ask AI Chef
             </button>

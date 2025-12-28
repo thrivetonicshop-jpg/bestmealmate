@@ -184,7 +184,7 @@ export default function HomePage() {
               </h1>
 
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 animate-slide-up animate-delay-100">
-                Different tastes. Allergies. Picky eaters. Expiring food. The endless "what's for dinner?" question.
+                Different tastes. Allergies. Picky eaters. Expiring food. The endless &quot;what&apos;s for dinner?&quot; question.
                 <span className="font-semibold text-gray-900"> We solve all of it.</span>
               </p>
 
@@ -221,7 +221,7 @@ export default function HomePage() {
                       <ChefHat className="w-6 h-6 text-brand-600" />
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">Tonight's Dinner</p>
+                      <p className="font-semibold text-gray-900">Tonight&apos;s Dinner</p>
                       <p className="text-sm text-gray-500">Ready in 35 min</p>
                     </div>
                   </div>
@@ -305,7 +305,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="section-title">Sound familiar?</h2>
             <p className="section-subtitle">
-              You're not a bad cook. You're just juggling too much.
+              You&apos;re not a bad cook. You&apos;re just juggling too much.
             </p>
           </div>
 
@@ -342,7 +342,7 @@ export default function HomePage() {
             </div>
             <h2 className="section-title">BestMealMate handles everything</h2>
             <p className="section-subtitle">
-              Tell us about your family. We'll do the rest.
+              Tell us about your family. We&apos;ll do the rest.
             </p>
           </div>
 
@@ -369,7 +369,7 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <h2 className="section-title">How it works</h2>
             <p className="section-subtitle">
-              Get started in under 2 minutes. It's really that simple.
+              Get started in under 2 minutes. It&apos;s really that simple.
             </p>
           </div>
 
@@ -558,7 +558,7 @@ export default function HomePage() {
           </h2>
           <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
             Set up your family in 2 minutes. Get your first meal plan instantly.
-            Join 50,000+ families who've reclaimed their dinner time.
+            Join 50,000+ families who&apos;ve reclaimed their dinner time.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

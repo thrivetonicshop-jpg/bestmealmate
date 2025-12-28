@@ -206,7 +206,7 @@ export default function LoginPage() {
             </h2>
 
             <p className="text-lg text-white/90 mb-10">
-              Different diets, allergies, and preferences? We've got you covered.
+              Different diets, allergies, and preferences? We&apos;ve got you covered.
               Let AI create personalized meal plans for everyone.
             </p>
 
@@ -237,7 +237,7 @@ export default function LoginPage() {
                 </div>
                 <div>
                   <p className="font-semibold">Join 50,000+ families</p>
-                  <p className="text-sm text-white/70">who've simplified their meal planning</p>
+                  <p className="text-sm text-white/70">who&apos;ve simplified their meal planning</p>
                 </div>
               </div>
             </div>
