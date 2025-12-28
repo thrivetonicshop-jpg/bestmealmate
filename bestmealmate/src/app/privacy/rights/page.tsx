@@ -10,7 +10,7 @@ export default function PrivacyRights() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Your Privacy Rights</h1>
-        <p className="text-sm text-gray-500 mb-8">Last updated: December 28, 2024</p>
+        <p className="text-sm text-gray-500 mb-8">Last updated: December 28, 2025</p>
 
         <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
           <p className="text-sm text-gray-700">

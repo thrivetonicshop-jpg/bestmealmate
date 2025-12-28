@@ -10,7 +10,7 @@ export default function CookiePolicy() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Cookie Policy</h1>
-        <p className="text-sm text-gray-500 mb-8">Last updated: December 28, 2024</p>
+        <p className="text-sm text-gray-500 mb-8">Last updated: December 28, 2025</p>
 
         <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
           <p className="text-sm text-gray-700">
@@ -110,8 +110,8 @@ export default function CookiePolicy() {
 
             <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">2.3 Analytics Cookies</h3>
             <p className="mb-2">
-              These cookies help us understand how visitors interact with our website. We use privacy-focused
-              analytics that do not track individuals across websites:
+              These cookies help us understand how visitors interact with our website and measure the
+              effectiveness of our marketing efforts:
             </p>
             <div className="overflow-x-auto">
               <table className="min-w-full border border-gray-200 text-sm mt-2">
@@ -124,18 +124,69 @@ export default function CookiePolicy() {
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="px-4 py-2 font-mono text-xs">_vercel_insights</td>
-                    <td className="px-4 py-2">Anonymous page view analytics</td>
-                    <td className="px-4 py-2">Session</td>
+                    <td className="px-4 py-2 border-b font-mono text-xs">_vercel_insights</td>
+                    <td className="px-4 py-2 border-b">Anonymous page view analytics</td>
+                    <td className="px-4 py-2 border-b">Session</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 border-b font-mono text-xs">_ga, _ga_*</td>
+                    <td className="px-4 py-2 border-b">Google Analytics - page views & user behavior</td>
+                    <td className="px-4 py-2 border-b">2 years</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 font-mono text-xs">_gid</td>
+                    <td className="px-4 py-2">Google Analytics - session tracking</td>
+                    <td className="px-4 py-2">24 hours</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-              <p className="text-sm text-green-800">
-                <strong>We do NOT use:</strong> Advertising cookies, third-party tracking cookies,
-                or cookies that follow you across other websites. Your privacy is our priority.
+            <h3 className="text-lg font-medium text-gray-800 mt-6 mb-2">2.4 Advertising Cookies</h3>
+            <p className="mb-2">
+              We use advertising cookies to measure the effectiveness of our marketing campaigns and
+              to show you relevant ads if you&apos;ve visited our site:
+            </p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-gray-200 text-sm mt-2">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left border-b">Cookie Name</th>
+                    <th className="px-4 py-2 text-left border-b">Purpose</th>
+                    <th className="px-4 py-2 text-left border-b">Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="px-4 py-2 border-b font-mono text-xs">_gcl_au</td>
+                    <td className="px-4 py-2 border-b">Google Ads conversion tracking</td>
+                    <td className="px-4 py-2 border-b">90 days</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 border-b font-mono text-xs">ads/ga-audiences</td>
+                    <td className="px-4 py-2 border-b">Google Ads remarketing</td>
+                    <td className="px-4 py-2 border-b">Session</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 font-mono text-xs">__gads, __gpi</td>
+                    <td className="px-4 py-2">Google AdSense ad personalization</td>
+                    <td className="px-4 py-2">13 months</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-800">
+                <strong>Opt-out of personalized ads:</strong> You can opt out of Google&apos;s personalized
+                advertising by visiting{' '}
+                <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="underline">
+                  Google Ads Settings
+                </a>{' '}
+                or by using{' '}
+                <a href="https://optout.networkadvertising.org" target="_blank" rel="noopener noreferrer" className="underline">
+                  Network Advertising Initiative opt-out
+                </a>.
               </p>
             </div>
           </section>
@@ -155,10 +206,22 @@ export default function CookiePolicy() {
               <li>
                 <strong>Vercel:</strong> Hosting and performance cookies for optimal site performance
               </li>
+              <li>
+                <strong>Google Analytics:</strong> Website analytics to understand user behavior and improve our service
+              </li>
+              <li>
+                <strong>Google Ads:</strong> Conversion tracking to measure the effectiveness of our advertising campaigns
+              </li>
+              <li>
+                <strong>Google AdSense:</strong> Display advertising to support our free tier offering
+              </li>
             </ul>
             <p className="mt-3 text-sm text-gray-600">
               These third parties have their own privacy policies governing how they use cookies.
-              We recommend reviewing their policies for more information.
+              We recommend reviewing their policies for more information:{' '}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+                Google Privacy Policy
+              </a>.
             </p>
           </section>
 
