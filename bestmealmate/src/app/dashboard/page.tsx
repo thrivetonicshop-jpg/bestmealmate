@@ -69,6 +69,37 @@ const navItems = [
 export default function DashboardPage() {
   const [showAIChef, setShowAIChef] = useState(false)
   const [aiInput, setAIInput] = useState('')
+  const [aiResponse, setAiResponse] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const [showRecipeModal, setShowRecipeModal] = useState(false)
+  const [selectedMeal, setSelectedMeal] = useState<typeof mockMealPlan[0] | null>(null)
+
+  const askAIChef = async (question: string) => {
+    if (!question.trim()) return
+    setAiLoading(true)
+    try {
+      const response = await fetch('/api/ai-chef', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: question,
+          pantryItems: mockExpiring.map(i => i.name),
+          familyMembers: mockFamily.map(m => ({ name: m.name, restrictions: m.restrictions }))
+        })
+      })
+      const data = await response.json()
+      setAiResponse(data.message || data.suggestion || 'Here are some meal ideas based on your pantry!')
+    } catch {
+      setAiResponse('I suggest trying Honey Garlic Chicken - it uses ingredients you have and takes only 30 minutes!')
+    }
+    setAiLoading(false)
+    setAIInput('')
+  }
+
+  const handleStartCooking = (meal: typeof mockMealPlan[0]) => {
+    setSelectedMeal(meal)
+    setShowRecipeModal(true)
+  }
 
   const greeting = () => {
     const hour = new Date().getHours()
@@ -233,14 +264,20 @@ export default function DashboardPage() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <button className="flex-1 bg-white text-brand-700 py-4 rounded-xl font-semibold hover:bg-white/90 transition-all flex items-center justify-center gap-2 shadow-lg">
+                    <button
+                      onClick={() => handleStartCooking(mockMealPlan[0])}
+                      className="flex-1 bg-white text-brand-700 py-4 rounded-xl font-semibold hover:bg-white/90 transition-all flex items-center justify-center gap-2 shadow-lg"
+                    >
                       <UtensilsCrossed className="w-5 h-5" />
                       Start Cooking
                     </button>
-                    <button className="px-6 py-4 bg-white/20 backdrop-blur-sm rounded-xl font-medium hover:bg-white/30 transition-all">
+                    <Link href="/dashboard/recipes" className="px-6 py-4 bg-white/20 backdrop-blur-sm rounded-xl font-medium hover:bg-white/30 transition-all text-center">
                       Swap Meal
-                    </button>
-                    <button className="px-6 py-4 bg-white/20 backdrop-blur-sm rounded-xl font-medium hover:bg-white/30 transition-all">
+                    </Link>
+                    <button
+                      onClick={() => handleStartCooking(mockMealPlan[0])}
+                      className="px-6 py-4 bg-white/20 backdrop-blur-sm rounded-xl font-medium hover:bg-white/30 transition-all"
+                    >
                       View Recipe
                     </button>
                   </div>
@@ -363,7 +400,13 @@ export default function DashboardPage() {
                     </div>
                   ))}
                 </div>
-                <button className="w-full mt-4 py-3 text-brand-600 font-semibold text-sm hover:text-brand-700 transition-colors flex items-center justify-center gap-2 bg-brand-50 rounded-xl hover:bg-brand-100">
+                <button
+                  onClick={() => {
+                    setShowAIChef(true)
+                    askAIChef('What can I make with ' + mockExpiring.map(i => i.name).join(', ') + '?')
+                  }}
+                  className="w-full mt-4 py-3 text-brand-600 font-semibold text-sm hover:text-brand-700 transition-colors flex items-center justify-center gap-2 bg-brand-50 rounded-xl hover:bg-brand-100"
+                >
                   <Sparkles className="w-4 h-4" />
                   Get recipe suggestions
                 </button>
@@ -479,26 +522,38 @@ export default function DashboardPage() {
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5 mb-5 border border-purple-100">
                 <div className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-white" />
+                    {aiLoading ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4 text-white" />
+                    )}
                   </div>
                   <div>
                     <p className="text-gray-700 leading-relaxed">
-                      Based on your pantry and family preferences, I suggest <strong className="text-purple-700">Honey Garlic Chicken</strong> for tonight.
-                      It uses your chicken that expires tomorrow, takes 30 minutes, and everyone in your family can eat it!
+                      {aiLoading ? (
+                        'Thinking of the perfect meal for you...'
+                      ) : aiResponse ? (
+                        aiResponse
+                      ) : (
+                        <>Based on your pantry and family preferences, I suggest <strong className="text-purple-700">Honey Garlic Chicken</strong> for tonight. It uses your chicken that expires tomorrow, takes 30 minutes, and everyone in your family can eat it!</>
+                      )}
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2 mb-5">
-                <button className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2">
+                <Link href="/dashboard/plan" className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   Add to Plan
-                </button>
-                <button className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                </Link>
+                <Link href="/dashboard/recipes" className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">
                   View Recipe
-                </button>
-                <button className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors">
+                </Link>
+                <button
+                  onClick={() => askAIChef('Suggest another meal for my family')}
+                  className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                >
                   Suggest Another
                 </button>
               </div>
@@ -508,10 +563,15 @@ export default function DashboardPage() {
                   type="text"
                   value={aiInput}
                   onChange={(e) => setAIInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && askAIChef(aiInput)}
                   placeholder="Ask me anything about meals..."
                   className="w-full px-5 py-4 pr-14 rounded-2xl border border-gray-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 outline-none transition-all"
                 />
-                <button className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl flex items-center justify-center hover:shadow-lg transition-all">
+                <button
+                  onClick={() => askAIChef(aiInput)}
+                  disabled={aiLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl flex items-center justify-center hover:shadow-lg transition-all disabled:opacity-50"
+                >
                   <Send className="w-5 h-5" />
                 </button>
               </div>
@@ -520,7 +580,7 @@ export default function DashboardPage() {
                 {['What can I make with chicken?', 'Quick 20-min meals', 'Kid-friendly dinners'].map((suggestion, i) => (
                   <button
                     key={i}
-                    onClick={() => setAIInput(suggestion)}
+                    onClick={() => askAIChef(suggestion)}
                     className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                   >
                     {suggestion}
@@ -551,6 +611,85 @@ export default function DashboardPage() {
           ))}
         </div>
       </nav>
+
+      {/* Recipe Modal */}
+      {showRecipeModal && selectedMeal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-scale-in max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-brand-500 to-emerald-500 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-4xl">
+                    {selectedMeal.image}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-2xl">{selectedMeal.meal}</h3>
+                    <p className="text-white/80 flex items-center gap-3 mt-1">
+                      <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {selectedMeal.time}</span>
+                      <span className="flex items-center gap-1"><Flame className="w-4 h-4" /> {selectedMeal.calories} cal</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRecipeModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <h4 className="font-bold text-lg text-gray-900 mb-4">Ingredients</h4>
+              <ul className="space-y-2 mb-6">
+                {['2 lbs chicken breast', '1 lb mixed vegetables', '3 tbsp olive oil', '2 cloves garlic, minced', 'Salt and pepper to taste', '1 tsp Italian herbs'].map((ingredient, i) => (
+                  <li key={i} className="flex items-center gap-3 text-gray-700">
+                    <div className="w-6 h-6 rounded-full bg-brand-100 flex items-center justify-center">
+                      <Check className="w-4 h-4 text-brand-600" />
+                    </div>
+                    {ingredient}
+                  </li>
+                ))}
+              </ul>
+
+              <h4 className="font-bold text-lg text-gray-900 mb-4">Instructions</h4>
+              <ol className="space-y-4">
+                {[
+                  'Preheat oven to 425°F (220°C).',
+                  'Cut chicken and vegetables into bite-sized pieces.',
+                  'Toss everything with olive oil, garlic, and seasonings.',
+                  'Spread on a sheet pan in a single layer.',
+                  'Roast for 25-30 minutes until chicken is cooked through.',
+                  'Let rest for 5 minutes before serving.'
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-brand-600 text-white flex items-center justify-center font-bold flex-shrink-0">
+                      {i + 1}
+                    </div>
+                    <p className="text-gray-700 pt-1">{step}</p>
+                  </li>
+                ))}
+              </ol>
+
+              <div className="flex gap-3 mt-8">
+                <button
+                  onClick={() => setShowRecipeModal(false)}
+                  className="flex-1 py-3 bg-gradient-to-r from-brand-500 to-emerald-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" />
+                  Mark as Cooked
+                </button>
+                <Link href="/dashboard/groceries" className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors flex items-center gap-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  Add Ingredients
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
