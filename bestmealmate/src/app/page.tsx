@@ -797,22 +797,36 @@ export default function HomePage() {
             <div>
               <h4 className="font-semibold text-white mb-4">Product</h4>
               <ul className="space-y-2">
-                {['Features', 'Pricing', 'Recipes', 'Mobile App'].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-gray-400 hover:text-white transition-colors">{item}</a>
-                  </li>
-                ))}
+                <li>
+                  <a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a>
+                </li>
+                <li>
+                  <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
+                </li>
+                <li>
+                  <Link href="/dashboard/recipes" className="text-gray-400 hover:text-white transition-colors">Recipes</Link>
+                </li>
+                <li>
+                  <Link href="/onboarding" className="text-gray-400 hover:text-white transition-colors">Get the App</Link>
+                </li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold text-white mb-4">Company</h4>
               <ul className="space-y-2">
-                {['About', 'Blog', 'Careers', 'Contact'].map((item) => (
-                  <li key={item}>
-                    <a href="#" className="text-gray-400 hover:text-white transition-colors">{item}</a>
-                  </li>
-                ))}
+                <li>
+                  <Link href="/about" className="text-gray-400 hover:text-white transition-colors">About</Link>
+                </li>
+                <li>
+                  <a href="https://x.com/bestmealmate" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Blog</a>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Careers</Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact</Link>
+                </li>
               </ul>
             </div>
 
