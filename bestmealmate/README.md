@@ -163,6 +163,84 @@ See `supabase/schema.sql` for complete schema with RLS policies.
 | Premium | $9.99/mo | 4 members, AI chef, smart grocery, pantry |
 | Family | $14.99/mo | Unlimited members, calendar sync, cooking mode |
 
+## Testing with Claude Code
+
+This project includes a Playwright MCP configuration for Claude Code, allowing AI-assisted browser testing.
+
+### Setup
+
+1. Install Claude Code
+2. The `.claude/settings.local.json` file configures the Playwright MCP server automatically
+3. Restart Claude Code after cloning the project
+
+### Available Testing Tools
+
+With Playwright MCP enabled, you have access to:
+- `mcp__playwright__navigate` - Navigate to URLs
+- `mcp__playwright__screenshot` - Capture screenshots
+- `mcp__playwright__click` - Click on elements
+- `mcp__playwright__fill` - Fill in form fields
+- And more browser automation capabilities
+
+### Manual Configuration
+
+If you prefer to configure globally, add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"]
+    }
+  }
+}
+```
+
+### Testing Stripe Integration
+
+Run the Stripe test script to verify your integration:
+
+```bash
+# Start the dev server first
+npm run dev
+
+# In another terminal, run the test
+npm run test:stripe
+```
+
+#### Stripe Test Cards
+
+| Card Number | Scenario |
+|-------------|----------|
+| `4242 4242 4242 4242` | Successful payment |
+| `4000 0000 0000 0002` | Card declined |
+| `4000 0025 0000 3155` | Requires authentication |
+
+#### Testing with Playwright MCP
+
+With Playwright MCP enabled, you can automate Stripe checkout testing:
+
+1. Navigate to the app: `mcp__playwright__navigate` to `http://localhost:3000`
+2. Click upgrade button: `mcp__playwright__click` on pricing CTA
+3. Fill test card: `mcp__playwright__fill` with `4242424242424242`
+4. Screenshot result: `mcp__playwright__screenshot`
+
+#### Testing Webhooks Locally
+
+Use the Stripe CLI to forward webhooks:
+
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Login and forward webhooks
+stripe login
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+
+# Copy the webhook signing secret to .env.local
+```
+
 ## Contributing
 
 1. Fork the repo

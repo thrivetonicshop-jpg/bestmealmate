@@ -273,13 +273,13 @@ export default function OnboardingPage() {
                 className="text-center pt-16"
               >
                 <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-8">
-                  You're not a bad cook.<br />
-                  <span className="text-brand-600">You're just juggling too much.</span>
+                  You&apos;re not a bad cook.<br />
+                  <span className="text-brand-600">You&apos;re just juggling too much.</span>
                 </h1>
                 <div className="space-y-4 text-left max-w-md mx-auto mb-12">
                   {[
                     "Planning meals for multiple people with different needs",
-                    "Remembering what's in your fridge",
+                    "Remembering what&apos;s in your fridge",
                     "Staying on budget",
                     "Keeping everyone happy"
                   ].map((item, i) => (
@@ -291,7 +291,7 @@ export default function OnboardingPage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xl text-gray-500 italic">It shouldn't be this hard.</p>
+                <p className="text-xl text-gray-500 italic">It shouldn&apos;t be this hard.</p>
               </motion.div>
             )}
 
@@ -340,9 +340,9 @@ export default function OnboardingPage() {
                 className="pt-8"
               >
                 <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">
-                  Let's get you set up
+                  Let&apos;s get you set up
                 </h2>
-                <p className="text-gray-600 mb-8 text-center">Create your account to save your family's preferences</p>
+                <p className="text-gray-600 mb-8 text-center">Create your account to save your family&apos;s preferences</p>
                 
                 <div className="space-y-4 max-w-md mx-auto">
                   <div>
@@ -389,7 +389,7 @@ export default function OnboardingPage() {
                 className="pt-8"
               >
                 <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">
-                  Who's in your family?
+                  Who&apos;s in your family?
                 </h2>
                 <p className="text-gray-600 mb-8 text-center">Add everyone who eats dinner together</p>
                 

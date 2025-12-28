@@ -145,7 +145,7 @@ export default function DashboardPage() {
           <div className="px-4 lg:px-8 py-4 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{greeting()}!</h1>
-              <p className="text-gray-500">Here's what's cooking this week</p>
+              <p className="text-gray-500">Here&apos;s what&apos;s cooking this week</p>
             </div>
             <div className="flex items-center gap-3">
               <button className="relative p-2.5 hover:bg-gray-100 rounded-xl transition-colors">
@@ -191,7 +191,7 @@ export default function DashboardPage() {
           <div className="grid lg:grid-cols-3 gap-6">
             {/* Main Column - Meal Plan */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Tonight's Dinner - Hero Card */}
+              {/* Tonight&apos;s Dinner - Hero Card */}
               <div className="relative overflow-hidden bg-gradient-to-br from-brand-600 via-brand-600 to-emerald-500 rounded-3xl p-6 lg:p-8 text-white">
                 {/* Decorative elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
@@ -206,7 +206,7 @@ export default function DashboardPage() {
                       <div>
                         <p className="text-white/70 text-sm font-medium mb-1 flex items-center gap-2">
                           <Flame className="w-4 h-4" />
-                          Tonight's Dinner
+                          Tonight&apos;s Dinner
                         </p>
                         <h2 className="text-2xl lg:text-3xl font-bold">{mockMealPlan[0].meal}</h2>
                       </div>
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                     <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
                       <Calendar className="w-5 h-5 text-brand-600" />
                     </div>
-                    <h3 className="font-bold text-gray-900 text-lg">This Week's Menu</h3>
+                    <h3 className="font-bold text-gray-900 text-lg">This Week&apos;s Menu</h3>
                   </div>
                   <Link href="/dashboard/plan" className="text-brand-600 text-sm font-medium hover:text-brand-700 flex items-center gap-1 hover:gap-2 transition-all">
                     View All <ChevronRight className="w-4 h-4" />

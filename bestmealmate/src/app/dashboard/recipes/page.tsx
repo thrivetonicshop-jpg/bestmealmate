@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   ChefHat,
   Calendar,
@@ -281,7 +282,7 @@ export default function RecipesPage() {
               <Sparkles className="w-5 h-5" />
               <span className="font-semibold">AI Recipe Finder</span>
             </div>
-            <p className="text-sm text-white/80 mb-3">Tell me what you're craving and I'll find the perfect recipe!</p>
+            <p className="text-sm text-white/80 mb-3">Tell me what you&apos;re craving and I&apos;ll find the perfect recipe!</p>
             <button className="w-full py-2 bg-white/20 rounded-lg text-sm font-medium hover:bg-white/30 transition-colors">
               Ask AI Chef
             </button>
@@ -477,10 +478,11 @@ export default function RecipesPage() {
                   className="group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-card-hover hover:border-gray-200 transition-all duration-300 hover:-translate-y-1"
                 >
                   <div className="relative h-56 overflow-hidden">
-                    <img
+                    <Image
                       src={recipe.image_url}
                       alt={recipe.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 

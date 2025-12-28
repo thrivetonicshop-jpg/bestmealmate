@@ -153,6 +153,7 @@ export default function PantryPage() {
   useEffect(() => {
     fetchPantryItems()
     fetchIngredients()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function fetchPantryItems() {
