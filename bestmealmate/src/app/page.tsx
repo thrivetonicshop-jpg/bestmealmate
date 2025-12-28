@@ -27,6 +27,7 @@ import {
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [showDemoVideo, setShowDemoVideo] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -193,7 +194,10 @@ export default function HomePage() {
                   Start Planning Free
                   <ArrowRight className="w-5 h-5" />
                 </Link>
-                <button className="btn-secondary text-lg px-8 py-4 flex items-center justify-center gap-2">
+                <button
+                  onClick={() => setShowDemoVideo(true)}
+                  className="btn-secondary text-lg px-8 py-4 flex items-center justify-center gap-2"
+                >
                   <Play className="w-5 h-5" />
                   Watch Demo
                 </button>
@@ -653,6 +657,70 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Demo Video Modal */}
+      {showDemoVideo && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={() => setShowDemoVideo(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl bg-gray-900 rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setShowDemoVideo(false)}
+              className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+
+            {/* Video placeholder - replace with actual video embed */}
+            <div className="aspect-video bg-gradient-to-br from-brand-600 to-brand-800 flex flex-col items-center justify-center text-white p-8">
+              <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6 backdrop-blur-sm">
+                <Play className="w-12 h-12 text-white ml-1" />
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-bold mb-2 text-center">
+                BestMealMate Demo
+              </h3>
+              <p className="text-white/80 text-center max-w-md mb-6">
+                See how BestMealMate helps families plan meals, reduce food waste, and enjoy stress-free dinners.
+              </p>
+
+              {/* Demo features preview */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-2xl">
+                {[
+                  { icon: Users, label: 'Family Profiles' },
+                  { icon: Sparkles, label: 'AI Suggestions' },
+                  { icon: Refrigerator, label: 'Smart Pantry' },
+                  { icon: ShoppingCart, label: 'Grocery Lists' },
+                ].map((feature, i) => (
+                  <div
+                    key={i}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center"
+                  >
+                    <feature.icon className="w-6 h-6 mx-auto mb-1" />
+                    <p className="text-xs font-medium">{feature.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-8 text-sm text-white/60">
+                Video coming soon! For now, try the app free.
+              </p>
+              <Link
+                href="/onboarding"
+                onClick={() => setShowDemoVideo(false)}
+                className="mt-4 px-6 py-3 bg-white text-brand-600 rounded-xl font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
+              >
+                Get Started Free
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
