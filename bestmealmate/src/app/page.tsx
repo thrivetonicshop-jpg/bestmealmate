@@ -873,10 +873,12 @@ export default function HomePage() {
             ].map((recipe, i) => (
               <div key={i} className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="h-40 relative overflow-hidden">
-                  <img
+                  <Image
                     src={recipe.image}
                     alt={recipe.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 300px"
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className={`absolute inset-0 bg-gradient-to-t ${recipe.color} opacity-20`} />
                 </div>
@@ -1055,10 +1057,12 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Row 1 */}
             <div className="col-span-2 row-span-2 relative group overflow-hidden rounded-2xl">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&h=800&fit=crop"
                 alt="Family dinner"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 text-white">
@@ -1067,53 +1071,67 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop"
                 alt="Healthy salad"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=400&fit=crop"
                 alt="Fresh pasta"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1432139509613-5c4255815697?w=400&h=400&fit=crop"
                 alt="Grilled steak"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=400&fit=crop"
                 alt="Vegetable bowl"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             {/* Row 2 */}
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&h=400&fit=crop"
                 alt="Breakfast spread"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop"
                 alt="Gourmet plate"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="col-span-2 relative group overflow-hidden rounded-2xl aspect-video">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800&h=400&fit=crop"
                 alt="Table spread"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 text-white">
