@@ -649,6 +649,218 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Recipe Database Section */}
+      <section id="recipes" className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 text-orange-700 text-sm font-medium mb-4">
+              <ChefHat className="w-4 h-4" />
+              100,000+ Recipes
+            </div>
+            <h2 className="section-title">The largest family-friendly recipe database</h2>
+            <p className="section-subtitle">
+              Every recipe works for multiple diets. Filter once, feed everyone.
+            </p>
+          </div>
+
+          {/* Recipe Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+            {[
+              { value: "100K+", label: "Recipes", sub: "Growing daily" },
+              { value: "15+", label: "Diet Types", sub: "Keto to vegan" },
+              { value: "200+", label: "Allergens Tracked", sub: "Beyond the big 8" },
+              { value: "30 min", label: "Avg Cook Time", sub: "Quick by default" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center p-6 rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200">
+                <p className="text-3xl font-bold text-gradient mb-1">{stat.value}</p>
+                <p className="font-semibold text-gray-900 text-sm">{stat.label}</p>
+                <p className="text-gray-500 text-xs">{stat.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Diet Filter Pills */}
+          <div className="mb-12">
+            <p className="text-center text-gray-600 mb-6 font-medium">Filter by any combination of diets:</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {[
+                { name: "Keto", color: "bg-purple-100 text-purple-700 border-purple-200" },
+                { name: "Vegetarian", color: "bg-green-100 text-green-700 border-green-200" },
+                { name: "Vegan", color: "bg-emerald-100 text-emerald-700 border-emerald-200" },
+                { name: "Gluten-Free", color: "bg-amber-100 text-amber-700 border-amber-200" },
+                { name: "Dairy-Free", color: "bg-blue-100 text-blue-700 border-blue-200" },
+                { name: "Nut-Free", color: "bg-red-100 text-red-700 border-red-200" },
+                { name: "Low-Sodium", color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+                { name: "Paleo", color: "bg-orange-100 text-orange-700 border-orange-200" },
+                { name: "Whole30", color: "bg-rose-100 text-rose-700 border-rose-200" },
+                { name: "Low-FODMAP", color: "bg-indigo-100 text-indigo-700 border-indigo-200" },
+                { name: "Pescatarian", color: "bg-teal-100 text-teal-700 border-teal-200" },
+                { name: "Diabetic-Friendly", color: "bg-pink-100 text-pink-700 border-pink-200" },
+              ].map((diet, i) => (
+                <span key={i} className={`px-4 py-2 rounded-full text-sm font-medium border ${diet.color} cursor-default hover:scale-105 transition-transform`}>
+                  {diet.name}
+                </span>
+              ))}
+            </div>
+            <p className="text-center text-gray-400 text-sm mt-4">
+              Other apps: pick ONE diet. BestMealMate: combine ANY.
+            </p>
+          </div>
+
+          {/* Sample Recipe Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[
+              {
+                name: "Honey Garlic Salmon",
+                time: "25 min",
+                calories: "420 cal",
+                diets: ["Keto", "Gluten-Free", "Dairy-Free"],
+                rating: 4.9,
+                reviews: 2847,
+                image: "🍣",
+                color: "from-orange-400 to-red-400"
+              },
+              {
+                name: "Thai Basil Chicken",
+                time: "20 min",
+                calories: "380 cal",
+                diets: ["Low-Carb", "Dairy-Free", "Nut-Free"],
+                rating: 4.8,
+                reviews: 1923,
+                image: "🍗",
+                color: "from-green-400 to-emerald-500"
+              },
+              {
+                name: "Mediterranean Bowl",
+                time: "15 min",
+                calories: "520 cal",
+                diets: ["Vegetarian", "Nut-Free"],
+                rating: 4.9,
+                reviews: 3102,
+                image: "🥗",
+                color: "from-blue-400 to-cyan-500"
+              },
+              {
+                name: "One-Pan Fajitas",
+                time: "30 min",
+                calories: "450 cal",
+                diets: ["Keto", "Gluten-Free", "Whole30"],
+                rating: 4.7,
+                reviews: 2156,
+                image: "🌮",
+                color: "from-yellow-400 to-orange-500"
+              },
+            ].map((recipe, i) => (
+              <div key={i} className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
+                <div className={`h-32 bg-gradient-to-br ${recipe.color} flex items-center justify-center text-5xl`}>
+                  {recipe.image}
+                </div>
+                <div className="p-4">
+                  <div className="flex items-center gap-1 mb-2">
+                    <Star className="w-4 h-4 text-amber-400 fill-current" />
+                    <span className="text-sm font-semibold text-gray-900">{recipe.rating}</span>
+                    <span className="text-xs text-gray-400">({recipe.reviews.toLocaleString()})</span>
+                  </div>
+                  <h4 className="font-bold text-gray-900 mb-2">{recipe.name}</h4>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {recipe.time}
+                    </span>
+                    <span>{recipe.calories}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {recipe.diets.map((diet, j) => (
+                      <span key={j} className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                        {diet}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recipe Categories */}
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+            {[
+              { name: "Quick Weeknight", icon: "⚡", count: "12,400+" },
+              { name: "Batch Cooking", icon: "🍲", count: "8,200+" },
+              { name: "Kid Approved", icon: "👶", count: "15,600+" },
+              { name: "Budget Friendly", icon: "💰", count: "18,900+" },
+              { name: "One-Pot Meals", icon: "🥘", count: "9,800+" },
+              { name: "Air Fryer", icon: "🌡️", count: "6,300+" },
+            ].map((cat, i) => (
+              <div key={i} className="text-center p-4 rounded-xl bg-gray-50 hover:bg-brand-50 border border-gray-200 hover:border-brand-300 transition-colors cursor-pointer group">
+                <span className="text-3xl block mb-2">{cat.icon}</span>
+                <p className="font-semibold text-gray-900 text-sm group-hover:text-brand-600">{cat.name}</p>
+                <p className="text-xs text-gray-500">{cat.count} recipes</p>
+              </div>
+            ))}
+          </div>
+
+          {/* AI Recipe Features */}
+          <div className="bg-gradient-to-r from-brand-500 to-purple-600 rounded-3xl p-8 md:p-12 text-white">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h3 className="text-2xl md:text-3xl font-bold mb-4">AI-Powered Recipe Magic</h3>
+                <p className="text-white/80 mb-6">
+                  Our AI doesn&apos;t just search recipes — it understands your family and creates meals that work.
+                </p>
+                <ul className="space-y-3">
+                  {[
+                    "\"Make it spicier\" — AI adjusts recipes on demand",
+                    "\"Use the chicken expiring tomorrow\" — prioritizes your pantry",
+                    "\"Something the kids will actually eat\" — learns preferences",
+                    "\"Swap salmon for chicken\" — instant ingredient substitutions",
+                    "\"Cheaper version\" — budget-aware alternatives",
+                  ].map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Sparkles className="w-5 h-5 text-amber-300 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-white/10 backdrop-blur rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">AI Chef</p>
+                    <p className="text-xs text-white/60">Thinking...</p>
+                  </div>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div className="bg-white/10 rounded-xl p-3">
+                    <p className="text-white/80">Based on your family&apos;s profiles:</p>
+                    <p className="text-xs text-white/60 mt-1">Dad (Keto) • Mom (No dairy) • Kids (Picky)</p>
+                  </div>
+                  <div className="bg-white/10 rounded-xl p-3">
+                    <p className="text-white/80">Tonight&apos;s suggestion:</p>
+                    <p className="font-semibold mt-1">Sheet Pan Chicken Fajitas</p>
+                    <p className="text-xs text-white/60">Works for everyone • Uses expiring peppers • 25 min</p>
+                  </div>
+                  <div className="bg-amber-400/20 border border-amber-400/30 rounded-xl p-3">
+                    <p className="text-amber-200 text-xs font-medium">✨ 3 ingredients expiring soon used in this recipe</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-12">
+            <Link href="/onboarding" className="inline-flex items-center gap-2 btn-primary text-lg px-8 py-4">
+              Explore All Recipes
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <p className="text-gray-500 text-sm mt-4">Free to browse. No credit card required.</p>
+          </div>
+        </div>
+      </section>
+
       {/* How it Works Section */}
       <section id="how-it-works" className="py-20 lg:py-28 bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
