@@ -1030,10 +1030,10 @@ export default function HomePage() {
 
           {/* View More Reviews */}
           <div className="text-center mt-10">
-            <button className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-brand-400 hover:text-brand-600 transition-all">
+            <Link href="/about#testimonials" className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:border-brand-400 hover:text-brand-600 transition-all">
               View all 12,847 reviews
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -1375,47 +1375,18 @@ export default function HomePage() {
               <X className="w-6 h-6 text-white" />
             </button>
 
-            {/* Video placeholder - replace with actual video embed */}
-            <div className="aspect-video bg-gradient-to-br from-brand-600 to-brand-800 flex flex-col items-center justify-center text-white p-8">
-              <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-6 backdrop-blur-sm">
-                <Play className="w-12 h-12 text-white ml-1" />
-              </div>
-              <h3 className="text-2xl sm:text-3xl font-bold mb-2 text-center">
-                BestMealMate Demo
-              </h3>
-              <p className="text-white/80 text-center max-w-md mb-6">
-                See how BestMealMate helps families plan meals, reduce food waste, and enjoy stress-free dinners.
-              </p>
-
-              {/* Demo features preview */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-2xl">
-                {[
-                  { icon: Users, label: 'Family Profiles' },
-                  { icon: Sparkles, label: 'AI Suggestions' },
-                  { icon: Refrigerator, label: 'Smart Pantry' },
-                  { icon: ShoppingCart, label: 'Grocery Lists' },
-                ].map((feature, i) => (
-                  <div
-                    key={i}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-3 text-center"
-                  >
-                    <feature.icon className="w-6 h-6 mx-auto mb-1" />
-                    <p className="text-xs font-medium">{feature.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <p className="mt-8 text-sm text-white/60">
-                Video coming soon! For now, try the app free.
-              </p>
-              <Link
-                href="/onboarding"
-                onClick={() => setShowDemoVideo(false)}
-                className="mt-4 px-6 py-3 bg-white text-brand-600 rounded-xl font-semibold hover:bg-gray-100 transition-colors flex items-center gap-2"
-              >
-                Get Started Free
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+            {/* Video embed */}
+            <div className="aspect-video bg-black flex flex-col items-center justify-center text-white">
+              <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                title="BestMealMate Demo"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full"
+              />
             </div>
           </div>
         </div>
