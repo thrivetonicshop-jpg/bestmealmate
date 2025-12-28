@@ -757,7 +757,7 @@ export default function HomePage() {
                 diets: ["Keto", "Gluten-Free", "Dairy-Free"],
                 rating: 4.9,
                 reviews: 2847,
-                image: "🍣",
+                image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=300&fit=crop",
                 color: "from-orange-400 to-red-400"
               },
               {
@@ -767,7 +767,7 @@ export default function HomePage() {
                 diets: ["Low-Carb", "Dairy-Free", "Nut-Free"],
                 rating: 4.8,
                 reviews: 1923,
-                image: "🍗",
+                image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop",
                 color: "from-green-400 to-emerald-500"
               },
               {
@@ -777,7 +777,7 @@ export default function HomePage() {
                 diets: ["Vegetarian", "Nut-Free"],
                 rating: 4.9,
                 reviews: 3102,
-                image: "🥗",
+                image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop",
                 color: "from-blue-400 to-cyan-500"
               },
               {
@@ -787,13 +787,18 @@ export default function HomePage() {
                 diets: ["Keto", "Gluten-Free", "Whole30"],
                 rating: 4.7,
                 reviews: 2156,
-                image: "🌮",
+                image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=300&fit=crop",
                 color: "from-yellow-400 to-orange-500"
               },
             ].map((recipe, i) => (
               <div key={i} className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
-                <div className={`h-32 bg-gradient-to-br ${recipe.color} flex items-center justify-center text-5xl`}>
-                  {recipe.image}
+                <div className="h-40 relative overflow-hidden">
+                  <img
+                    src={recipe.image}
+                    alt={recipe.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-t ${recipe.color} opacity-20`} />
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-1 mb-2">
@@ -950,6 +955,99 @@ export default function HomePage() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Food Gallery / Inspiration Section */}
+      <section className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-100 text-pink-700 text-sm font-medium mb-4">
+              <Camera className="w-4 h-4" />
+              Food Inspiration
+            </div>
+            <h2 className="section-title">Beautiful meals made by our community</h2>
+            <p className="section-subtitle">Real families cooking real food - every single day</p>
+          </div>
+
+          {/* Masonry-style Image Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Row 1 */}
+            <div className="col-span-2 row-span-2 relative group overflow-hidden rounded-2xl">
+              <img
+                src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&h=800&fit=crop"
+                alt="Family dinner"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 text-white">
+                <p className="font-bold text-lg">Family Roast Dinner</p>
+                <p className="text-sm opacity-80">Made by Sarah T.</p>
+              </div>
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop"
+                alt="Healthy salad"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=400&fit=crop"
+                alt="Fresh pasta"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1432139509613-5c4255815697?w=400&h=400&fit=crop"
+                alt="Grilled steak"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=400&fit=crop"
+                alt="Vegetable bowl"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            {/* Row 2 */}
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&h=400&fit=crop"
+                alt="Breakfast spread"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop"
+                alt="Gourmet plate"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="col-span-2 relative group overflow-hidden rounded-2xl aspect-video">
+              <img
+                src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800&h=400&fit=crop"
+                alt="Table spread"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 text-white">
+                <p className="font-bold text-lg">Weekend Brunch</p>
+                <p className="text-sm opacity-80">Made by The Johnson Family</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-10">
+            <Link href="/onboarding" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+              Start Creating Beautiful Meals
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
