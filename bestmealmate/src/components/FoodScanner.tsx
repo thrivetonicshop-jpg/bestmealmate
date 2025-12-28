@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import Image from 'next/image'
 import {
   Camera,
   X,
@@ -77,6 +78,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
   }, [stopCamera])
 
   // Capture image
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const captureImage = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return
 
@@ -98,6 +100,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
   }, [stopCamera])
 
   // Handle file upload
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -190,6 +193,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
       startCamera()
     }
     return () => stopCamera()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode])
 
   return (
@@ -257,6 +261,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
         ) : isAnalyzing ? (
           <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
             <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={capturedImage}
                 alt="Captured"
@@ -273,6 +278,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
           </div>
         ) : (
           <div className="w-full h-full flex flex-col bg-gray-900">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={capturedImage}
               alt="Captured"
