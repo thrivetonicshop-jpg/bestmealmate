@@ -256,7 +256,13 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/icon.svg" alt="BestMealMate" width={40} height={40} className="rounded-xl" />
+              <Image
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=80&fit=crop&crop=center"
+                alt="BestMealMate"
+                width={40}
+                height={40}
+                className="rounded-xl object-cover shadow-md"
+              />
               <span className="text-xl font-bold text-gray-900">BestMealMate</span>
             </Link>
 
@@ -1379,7 +1385,13 @@ export default function HomePage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <Image src="/icon.svg" alt="BestMealMate" width={40} height={40} className="rounded-xl" />
+                <Image
+                  src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=80&fit=crop&crop=center"
+                  alt="BestMealMate"
+                  width={40}
+                  height={40}
+                  className="rounded-xl object-cover shadow-md"
+                />
                 <span className="text-xl font-bold text-white">BestMealMate</span>
               </div>
               <p className="text-gray-400">
