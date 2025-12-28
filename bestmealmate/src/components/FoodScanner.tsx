@@ -22,6 +22,20 @@ interface DetectedItem {
   quantity: string
   category: string
   confidence: number
+  calories?: number
+  protein?: number
+  carbs?: number
+  fat?: number
+  expiryDays?: number
+  freshness?: 'fresh' | 'good' | 'use-soon' | 'expired'
+  barcode?: string
+}
+
+interface NutritionSummary {
+  totalCalories: number
+  totalProtein: number
+  totalCarbs: number
+  totalFat: number
 }
 
 interface FoodScannerProps {
@@ -42,6 +56,8 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
   const [detectedItems, setDetectedItems] = useState<DetectedItem[]>([])
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
   const [scanLocation, setScanLocation] = useState<'fridge' | 'freezer' | 'pantry'>('fridge')
+  const [nutritionSummary, setNutritionSummary] = useState<NutritionSummary | null>(null)
+  const [scanMode, setScanMode] = useState<'camera' | 'barcode'>('camera')
 
   // Start camera
   const startCamera = useCallback(async () => {
@@ -135,6 +151,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
       const data = await response.json()
       if (data.items && data.items.length > 0) {
         setDetectedItems(data.items)
+        setNutritionSummary(data.nutritionSummary || null)
         // Select all items by default
         setSelectedItems(new Set(data.items.map((_: DetectedItem, i: number) => i)))
         toast.success(`Found ${data.items.length} items!`)
@@ -147,13 +164,14 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
       toast.error('Failed to analyze image. Please try again.')
       // Use mock data for demo
       const mockItems: DetectedItem[] = [
-        { name: 'Milk', quantity: '1 gallon', category: 'dairy', confidence: 0.95 },
-        { name: 'Eggs', quantity: '12 count', category: 'dairy', confidence: 0.92 },
-        { name: 'Chicken Breast', quantity: '2 lbs', category: 'meat', confidence: 0.88 },
-        { name: 'Broccoli', quantity: '1 head', category: 'produce', confidence: 0.85 },
-        { name: 'Butter', quantity: '1 stick', category: 'dairy', confidence: 0.82 },
+        { name: 'Organic Whole Milk', quantity: '1 gallon', category: 'dairy', confidence: 0.95, calories: 150, protein: 8, carbs: 12, fat: 8, expiryDays: 14, freshness: 'fresh' },
+        { name: 'Large Brown Eggs', quantity: '1 dozen', category: 'dairy', confidence: 0.92, calories: 70, protein: 6, carbs: 0, fat: 5, expiryDays: 21, freshness: 'fresh' },
+        { name: 'Chicken Breast', quantity: '2 lbs', category: 'meat', confidence: 0.88, calories: 165, protein: 31, carbs: 0, fat: 4, expiryDays: 3, freshness: 'fresh' },
+        { name: 'Fresh Broccoli', quantity: '1 head', category: 'produce', confidence: 0.85, calories: 55, protein: 4, carbs: 11, fat: 0, expiryDays: 5, freshness: 'good' },
+        { name: 'Grass-Fed Butter', quantity: '1 stick', category: 'dairy', confidence: 0.82, calories: 100, protein: 0, carbs: 0, fat: 11, expiryDays: 30, freshness: 'fresh' },
       ]
       setDetectedItems(mockItems)
+      setNutritionSummary({ totalCalories: 540, totalProtein: 49, totalCarbs: 23, totalFat: 28 })
       setSelectedItems(new Set(mockItems.map((_, i) => i)))
     } finally {
       setIsAnalyzing(false)
@@ -165,6 +183,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
     setCapturedImage(null)
     setDetectedItems([])
     setSelectedItems(new Set())
+    setNutritionSummary(null)
     startCamera()
   }, [startCamera])
 
@@ -289,7 +308,33 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
                 <h3 className="text-xl font-bold text-gray-900 mb-4">
                   Detected Items ({detectedItems.length})
                 </h3>
-                <div className="space-y-3 max-h-[40vh] overflow-y-auto">
+
+                {/* Nutrition Summary */}
+                {nutritionSummary && (
+                  <div className="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-xl p-4 mb-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Nutrition Summary</p>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div>
+                        <p className="text-lg font-bold text-brand-600">{nutritionSummary.totalCalories}</p>
+                        <p className="text-xs text-gray-500">Calories</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-blue-600">{nutritionSummary.totalProtein}g</p>
+                        <p className="text-xs text-gray-500">Protein</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-amber-600">{nutritionSummary.totalCarbs}g</p>
+                        <p className="text-xs text-gray-500">Carbs</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-bold text-rose-600">{nutritionSummary.totalFat}g</p>
+                        <p className="text-xs text-gray-500">Fat</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-3 max-h-[35vh] overflow-y-auto">
                   {detectedItems.map((item, index) => (
                     <button
                       key={index}
@@ -301,7 +346,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
                       }`}
                     >
                       <div
-                        className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                        className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
                           selectedItems.has(index)
                             ? 'bg-brand-500 text-white'
                             : 'border-2 border-gray-300'
@@ -309,15 +354,45 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
                       >
                         {selectedItems.has(index) && <Check className="w-4 h-4" />}
                       </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-semibold text-gray-900">{item.name}</p>
+                      <div className="flex-1 text-left min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-gray-900 truncate">{item.name}</p>
+                          {item.freshness && (
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                              item.freshness === 'fresh' ? 'bg-green-100 text-green-700' :
+                              item.freshness === 'good' ? 'bg-blue-100 text-blue-700' :
+                              item.freshness === 'use-soon' ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {item.freshness === 'use-soon' ? 'Use Soon' : item.freshness}
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-500">
                           {item.quantity} • {item.category}
                         </p>
+                        {item.calories !== undefined && (
+                          <div className="flex gap-2 mt-1 text-xs text-gray-400">
+                            <span>{item.calories} cal</span>
+                            <span>•</span>
+                            <span>{item.protein}g protein</span>
+                            <span>•</span>
+                            <span>{item.carbs}g carbs</span>
+                            <span>•</span>
+                            <span>{item.fat}g fat</span>
+                          </div>
+                        )}
                       </div>
-                      <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
-                        {Math.round(item.confidence * 100)}%
-                      </span>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+                          {Math.round(item.confidence * 100)}%
+                        </span>
+                        {item.expiryDays && (
+                          <span className="text-xs text-gray-400">
+                            ~{item.expiryDays}d shelf life
+                          </span>
+                        )}
+                      </div>
                     </button>
                   ))}
                 </div>

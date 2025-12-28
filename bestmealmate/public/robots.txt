@@ -1,0 +1,10 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.bestmealmate.com/sitemap.xml
+
+# AdSense crawler
+User-agent: Mediapartners-Google
+Allow: /

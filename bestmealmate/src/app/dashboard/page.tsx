@@ -24,7 +24,8 @@ import {
   Bell,
   Search,
   X,
-  Send
+  Send,
+  Watch
 } from 'lucide-react'
 
 // Mock data - replace with Supabase queries
@@ -62,6 +63,7 @@ const navItems = [
   { icon: Refrigerator, label: 'Pantry', href: '/dashboard/pantry', active: false },
   { icon: ChefHat, label: 'Recipes', href: '/dashboard/recipes', active: false },
   { icon: Users, label: 'Family', href: '/dashboard/family', active: false },
+  { icon: Watch, label: 'Health', href: '/dashboard/wearables', active: false },
 ]
 
 export default function DashboardPage() {
