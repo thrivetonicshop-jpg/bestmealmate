@@ -366,7 +366,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
-        {/* Google Analytics 4 */}
+        {/* Google Analytics 4 + Google Ads */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
           strategy="afterInteractive"
@@ -380,6 +380,7 @@ export default function RootLayout({
               page_title: document.title,
               page_location: window.location.href,
             });
+            gtag('config', 'AW-17838684120');
           `}
         </Script>
         {/* Google AdSense */}
