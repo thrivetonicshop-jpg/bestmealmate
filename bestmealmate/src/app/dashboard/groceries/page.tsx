@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ChefHat,
@@ -13,62 +13,96 @@ import {
   Trash2,
   Settings,
   LogOut,
-  MoreVertical,
   Share2,
   Download
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
+import { useAuth } from '@/lib/auth-context'
+import {
+  getGroceryLists,
+  createGroceryList,
+  addGroceryItem,
+  toggleGroceryItemPurchased,
+  deleteGroceryItem,
+  clearPurchasedItems,
+  type GroceryItem,
+  type GroceryList
+} from '@/lib/supabase'
 
-interface GroceryItem {
+interface LocalGroceryItem extends GroceryItem {
   id: string
-  name: string
-  quantity: string
-  aisle: string
-  is_purchased: boolean
-  notes?: string
 }
 
-interface GroceryList {
+interface LocalGroceryList extends GroceryList {
   id: string
-  name: string
-  status: 'active' | 'shopping' | 'completed'
-  items: GroceryItem[]
-  created_at: string
+  items: LocalGroceryItem[]
 }
-
-const initialLists: GroceryList[] = [
-  {
-    id: '1',
-    name: 'Weekly Groceries',
-    status: 'active',
-    created_at: new Date().toISOString(),
-    items: [
-      { id: '1', name: 'Chicken Breast', quantity: '2 lbs', aisle: 'Meat', is_purchased: false },
-      { id: '2', name: 'Broccoli', quantity: '2 heads', aisle: 'Produce', is_purchased: false },
-      { id: '3', name: 'Milk', quantity: '1 gallon', aisle: 'Dairy', is_purchased: true },
-      { id: '4', name: 'Eggs', quantity: '1 dozen', aisle: 'Dairy', is_purchased: false },
-      { id: '5', name: 'Pasta', quantity: '2 boxes', aisle: 'Pantry', is_purchased: true },
-      { id: '6', name: 'Olive Oil', quantity: '1 bottle', aisle: 'Pantry', is_purchased: false },
-      { id: '7', name: 'Onions', quantity: '3', aisle: 'Produce', is_purchased: false },
-      { id: '8', name: 'Garlic', quantity: '1 head', aisle: 'Produce', is_purchased: true },
-    ]
-  }
-]
 
 const aisleOrder = ['Produce', 'Meat', 'Dairy', 'Pantry', 'Frozen', 'Beverages', 'Other']
 
 export default function GroceriesPage() {
-  const [lists, setLists] = useState<GroceryList[]>(initialLists)
-  const [activeListId, setActiveListId] = useState(lists[0]?.id)
+  const { household, signOut } = useAuth()
+  const [lists, setLists] = useState<LocalGroceryList[]>([])
+  const [activeListId, setActiveListId] = useState<string | null>(null)
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('')
   const [showAddItem, setShowAddItem] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  const loadLists = useCallback(async () => {
+    if (!household?.id) return
+    setLoading(true)
+    try {
+      const data = await getGroceryLists(household.id)
+      const formattedLists: LocalGroceryList[] = data
+        .filter(list => list.id)
+        .map(list => ({
+          id: list.id as string,
+          household_id: list.household_id,
+          name: list.name,
+          status: list.status || 'active',
+          created_at: list.created_at || new Date().toISOString(),
+          items: (list.grocery_items || []).map(item => ({
+            ...item,
+            id: item.id || `temp-${Date.now()}`
+          }))
+        }))
+      setLists(formattedLists)
+      if (formattedLists.length > 0 && !activeListId) {
+        setActiveListId(formattedLists[0].id)
+      }
+    } catch (error) {
+      console.error('Error loading grocery lists:', error)
+      // Fallback to demo data
+      setLists([{
+        id: 'demo-1',
+        household_id: household.id,
+        name: 'Weekly Groceries',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        items: [
+          { id: '1', name: 'Chicken Breast', quantity: '2 lbs', aisle: 'Meat', is_purchased: false },
+          { id: '2', name: 'Broccoli', quantity: '2 heads', aisle: 'Produce', is_purchased: false },
+          { id: '3', name: 'Milk', quantity: '1 gallon', aisle: 'Dairy', is_purchased: true },
+        ]
+      }])
+      setActiveListId('demo-1')
+    }
+    setLoading(false)
+  }, [household?.id, activeListId])
+
+  // Load grocery lists from Supabase
+  useEffect(() => {
+    if (household?.id) {
+      loadLists()
+    }
+  }, [household?.id, loadLists])
 
   const activeList = lists.find(l => l.id === activeListId)
 
   const groupedItems = useMemo(() => {
     if (!activeList) return {}
-    const groups: Record<string, GroceryItem[]> = {}
+    const groups: Record<string, LocalGroceryItem[]> = {}
 
     activeList.items.forEach(item => {
       const aisle = item.aisle || 'Other'
@@ -77,7 +111,7 @@ export default function GroceriesPage() {
     })
 
     // Sort by aisle order
-    const sorted: Record<string, GroceryItem[]> = {}
+    const sorted: Record<string, LocalGroceryItem[]> = {}
     aisleOrder.forEach(aisle => {
       if (groups[aisle]) sorted[aisle] = groups[aisle]
     })
@@ -96,19 +130,33 @@ export default function GroceriesPage() {
     }
   }, [activeList])
 
-  function toggleItem(itemId: string) {
+  async function toggleItem(itemId: string) {
+    const item = activeList?.items.find(i => i.id === itemId)
+    if (!item) return
+
+    // Optimistic update
     setLists(lists.map(list => {
       if (list.id !== activeListId) return list
       return {
         ...list,
-        items: list.items.map(item =>
-          item.id === itemId ? { ...item, is_purchased: !item.is_purchased } : item
+        items: list.items.map(i =>
+          i.id === itemId ? { ...i, is_purchased: !i.is_purchased } : i
         )
       }
     }))
+
+    // Sync to Supabase if not demo
+    if (!itemId.startsWith('demo') && !itemId.startsWith('temp')) {
+      try {
+        await toggleGroceryItemPurchased(itemId, !item.is_purchased)
+      } catch (error) {
+        console.error('Error toggling item:', error)
+      }
+    }
   }
 
-  function deleteItem(itemId: string) {
+  async function handleDeleteItem(itemId: string) {
+    // Optimistic update
     setLists(lists.map(list => {
       if (list.id !== activeListId) return list
       return {
@@ -117,20 +165,31 @@ export default function GroceriesPage() {
       }
     }))
     toast.success('Item removed')
+
+    // Sync to Supabase if not demo
+    if (!itemId.startsWith('demo') && !itemId.startsWith('temp')) {
+      try {
+        await deleteGroceryItem(itemId)
+      } catch (error) {
+        console.error('Error deleting item:', error)
+      }
+    }
   }
 
-  function addItem(e: React.FormEvent) {
+  async function handleAddItem(e: React.FormEvent) {
     e.preventDefault()
-    if (!newItemName.trim()) return
+    if (!newItemName.trim() || !activeListId) return
 
-    const newItem: GroceryItem = {
-      id: `item-${Date.now()}`,
+    const tempId = `temp-${Date.now()}`
+    const newItem: LocalGroceryItem = {
+      id: tempId,
       name: newItemName,
       quantity: newItemQuantity || '1',
       aisle: 'Other',
       is_purchased: false
     }
 
+    // Optimistic update
     setLists(lists.map(list => {
       if (list.id !== activeListId) return list
       return {
@@ -143,22 +202,61 @@ export default function GroceriesPage() {
     setNewItemQuantity('')
     setShowAddItem(false)
     toast.success('Item added')
+
+    // Sync to Supabase if not demo
+    if (!activeListId.startsWith('demo')) {
+      try {
+        const savedItem = await addGroceryItem(activeListId, newItem)
+        // Update with real ID
+        setLists(lists.map(list => {
+          if (list.id !== activeListId) return list
+          return {
+            ...list,
+            items: list.items.map(i =>
+              i.id === tempId ? { ...i, id: savedItem.id } : i
+            )
+          }
+        }))
+      } catch (error) {
+        console.error('Error adding item:', error)
+      }
+    }
   }
 
-  function createNewList() {
-    const newList: GroceryList = {
-      id: `list-${Date.now()}`,
+  async function handleCreateNewList() {
+    if (!household?.id) return
+
+    const tempId = `temp-list-${Date.now()}`
+    const newList: LocalGroceryList = {
+      id: tempId,
+      household_id: household.id,
       name: `Shopping List ${lists.length + 1}`,
       status: 'active',
       created_at: new Date().toISOString(),
       items: []
     }
+
+    // Optimistic update
     setLists([...lists, newList])
-    setActiveListId(newList.id)
+    setActiveListId(tempId)
     toast.success('New list created')
+
+    // Sync to Supabase
+    try {
+      const savedList = await createGroceryList(newList)
+      setLists(prev => prev.map(l =>
+        l.id === tempId ? { ...l, id: savedList.id } : l
+      ))
+      setActiveListId(savedList.id)
+    } catch (error) {
+      console.error('Error creating list:', error)
+    }
   }
 
-  function clearPurchased() {
+  async function handleClearPurchased() {
+    if (!activeListId) return
+
+    // Optimistic update
     setLists(lists.map(list => {
       if (list.id !== activeListId) return list
       return {
@@ -167,6 +265,47 @@ export default function GroceriesPage() {
       }
     }))
     toast.success('Purchased items cleared')
+
+    // Sync to Supabase if not demo
+    if (!activeListId.startsWith('demo') && !activeListId.startsWith('temp')) {
+      try {
+        await clearPurchasedItems(activeListId)
+      } catch (error) {
+        console.error('Error clearing purchased:', error)
+      }
+    }
+  }
+
+  function handleExportList() {
+    if (!activeList) return
+    const text = activeList.items
+      .map(i => `${i.is_purchased ? '✓' : '○'} ${i.name} (${i.quantity}) - ${i.aisle}`)
+      .join('\n')
+    navigator.clipboard.writeText(text)
+    toast.success('List copied to clipboard')
+  }
+
+  function handleShareList() {
+    if (!activeList) return
+    const text = `${activeList.name}\n\n` + activeList.items
+      .filter(i => !i.is_purchased)
+      .map(i => `• ${i.name} (${i.quantity})`)
+      .join('\n')
+
+    if (navigator.share) {
+      navigator.share({ title: activeList.name, text })
+    } else {
+      navigator.clipboard.writeText(text)
+      toast.success('List copied to clipboard')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
   }
 
   return (
@@ -209,7 +348,10 @@ export default function GroceriesPage() {
               <Settings className="w-5 h-5" />
               <span className="font-medium">Settings</span>
             </Link>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-3 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Sign Out</span>
             </button>
@@ -227,7 +369,7 @@ export default function GroceriesPage() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={createNewList}
+              onClick={handleCreateNewList}
               className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
             >
               <Plus className="w-5 h-5" />
@@ -281,16 +423,22 @@ export default function GroceriesPage() {
                 </button>
                 {stats.purchased > 0 && (
                   <button
-                    onClick={clearPurchased}
+                    onClick={handleClearPurchased}
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                   >
                     Clear Purchased
                   </button>
                 )}
-                <button className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={handleShareList}
+                  className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <Share2 className="w-5 h-5" />
                 </button>
-                <button className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                <button
+                  onClick={handleExportList}
+                  className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
                   <Download className="w-5 h-5" />
                 </button>
               </div>
@@ -299,7 +447,7 @@ export default function GroceriesPage() {
             {/* Add Item Form */}
             {showAddItem && (
               <div className="bg-white rounded-xl p-4 border border-gray-200 mb-6">
-                <form onSubmit={addItem} className="flex gap-2">
+                <form onSubmit={handleAddItem} className="flex gap-2">
                   <input
                     type="text"
                     value={newItemName}
@@ -376,7 +524,7 @@ export default function GroceriesPage() {
                             <span className="text-gray-500 ml-2">{item.quantity}</span>
                           </div>
                           <button
-                            onClick={() => deleteItem(item.id)}
+                            onClick={() => handleDeleteItem(item.id)}
                             className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />

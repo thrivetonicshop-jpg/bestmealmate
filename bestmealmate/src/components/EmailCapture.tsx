@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Mail, Gift, Sparkles } from 'lucide-react'
+import { subscribeEmail } from '@/lib/supabase'
 
 export default function EmailCapture() {
   const [isOpen, setIsOpen] = useState(false)
@@ -31,10 +32,17 @@ export default function EmailCapture() {
 
     setStatus('loading')
 
-    // Simulate API call - replace with actual newsletter API
     try {
-      // TODO: Integrate with your email service (Mailchimp, ConvertKit, etc.)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Save to Supabase email_subscribers table
+      await subscribeEmail({
+        email,
+        source: 'popup',
+        preferences: {
+          weekly_tips: true,
+          new_features: true,
+          promotions: false,
+        }
+      })
 
       setStatus('success')
       localStorage.setItem('emailCaptureInteracted', 'subscribed')
@@ -43,7 +51,8 @@ export default function EmailCapture() {
       setTimeout(() => {
         setIsOpen(false)
       }, 2000)
-    } catch {
+    } catch (error) {
+      console.error('Error subscribing:', error)
       setStatus('error')
     }
   }

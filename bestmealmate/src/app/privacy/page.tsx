@@ -10,7 +10,7 @@ export default function PrivacyPolicy() {
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Privacy Policy</h1>
-        <p className="text-sm text-gray-500 mb-8">Last updated: December 28, 2024</p>
+        <p className="text-sm text-gray-500 mb-8">Last updated: December 28, 2025</p>
 
         <div className="mb-6 p-4 bg-orange-50 rounded-lg border border-orange-200">
           <p className="text-sm text-gray-700">
@@ -152,13 +152,35 @@ export default function PrivacyPolicy() {
                     <td className="px-4 py-2 border-b">Scanned barcodes only</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-2">Wearable Providers</td>
-                    <td className="px-4 py-2">Health Data Sync</td>
-                    <td className="px-4 py-2">Authorization tokens only</td>
+                    <td className="px-4 py-2 border-b">Wearable Providers</td>
+                    <td className="px-4 py-2 border-b">Health Data Sync</td>
+                    <td className="px-4 py-2 border-b">Authorization tokens only</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 border-b">Google Analytics</td>
+                    <td className="px-4 py-2 border-b">Website Analytics</td>
+                    <td className="px-4 py-2 border-b">Usage data, page views, anonymized IP</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2 border-b">Google Ads</td>
+                    <td className="px-4 py-2 border-b">Advertising & Conversion Tracking</td>
+                    <td className="px-4 py-2 border-b">Conversion events, anonymized user data</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2">Google AdSense</td>
+                    <td className="px-4 py-2">Display Advertising</td>
+                    <td className="px-4 py-2">Ad preferences, anonymized browsing data</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <p className="mt-3 text-sm text-gray-600">
+              For advertising services: We use Google Ads for marketing and Google AdSense to display ads.
+              You can opt out of personalized advertising at{' '}
+              <a href="https://adssettings.google.com" target="_blank" rel="noopener noreferrer" className="text-orange-600 hover:underline">
+                Google Ads Settings
+              </a>.
+            </p>
           </section>
 
           <section>

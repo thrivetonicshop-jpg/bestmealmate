@@ -97,7 +97,6 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
   }, [stopCamera])
 
   // Capture image
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const captureImage = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return
 
@@ -116,10 +115,10 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
       analyzeImage(imageData)
     }
     setIsCapturing(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopCamera])
 
   // Handle file upload
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -132,6 +131,7 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
       }
       reader.readAsDataURL(file)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopCamera])
 
   // Analyze image with AI

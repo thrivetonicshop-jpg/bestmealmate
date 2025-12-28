@@ -256,7 +256,13 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/icon.svg" alt="BestMealMate" width={40} height={40} className="rounded-xl" />
+              <Image
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=80&fit=crop&crop=center"
+                alt="BestMealMate"
+                width={40}
+                height={40}
+                className="rounded-xl object-cover shadow-md"
+              />
               <span className="text-xl font-bold text-gray-900">BestMealMate</span>
             </Link>
 
@@ -646,6 +652,81 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Honest Pros & Cons */}
+          <div className="mt-12 grid md:grid-cols-2 gap-6">
+            {/* Pros */}
+            <div className="bg-green-900/20 rounded-2xl p-6 border border-green-500/30">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-green-400">Pros</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Handles multiple dietary restrictions simultaneously</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>AI-powered food scanner saves hours of manual entry</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Smart grocery lists merge ingredients automatically</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Syncs with health wearables for calorie goals</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>No ads, even in the free tier</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Cancel anytime with no hidden fees</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Cons */}
+            <div className="bg-orange-900/20 rounded-2xl p-6 border border-orange-500/30">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
+                  <XCircle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-orange-400">Cons</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Newer app with smaller recipe database than established competitors</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Premium features require subscription ($9.99-$14.99/mo)</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>AI suggestions depend on internet connection</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Limited international recipe options currently</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>No desktop app (web and mobile only)</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Grocery store integration coming soon (not yet available)</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
           {/* Switch CTA */}
           <div className="mt-12 text-center">
             <p className="text-gray-400 mb-6">Ready to try something that actually works for your whole family?</p>
@@ -792,10 +873,12 @@ export default function HomePage() {
             ].map((recipe, i) => (
               <div key={i} className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
                 <div className="h-40 relative overflow-hidden">
-                  <img
+                  <Image
                     src={recipe.image}
                     alt={recipe.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 300px"
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className={`absolute inset-0 bg-gradient-to-t ${recipe.color} opacity-20`} />
                 </div>
@@ -974,10 +1057,12 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Row 1 */}
             <div className="col-span-2 row-span-2 relative group overflow-hidden rounded-2xl">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&h=800&fit=crop"
                 alt="Family dinner"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 text-white">
@@ -986,53 +1071,67 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop"
                 alt="Healthy salad"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=400&fit=crop"
                 alt="Fresh pasta"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1432139509613-5c4255815697?w=400&h=400&fit=crop"
                 alt="Grilled steak"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=400&fit=crop"
                 alt="Vegetable bowl"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             {/* Row 2 */}
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&h=400&fit=crop"
                 alt="Breakfast spread"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="relative group overflow-hidden rounded-2xl aspect-square">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop"
                 alt="Gourmet plate"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 25vw"
+                className="object-cover group-hover:scale-110 transition-transform duration-300"
               />
             </div>
             <div className="col-span-2 relative group overflow-hidden rounded-2xl aspect-video">
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800&h=400&fit=crop"
                 alt="Table spread"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute bottom-4 left-4 text-white">
@@ -1379,7 +1478,13 @@ export default function HomePage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <Image src="/icon.svg" alt="BestMealMate" width={40} height={40} className="rounded-xl" />
+                <Image
+                  src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=80&fit=crop&crop=center"
+                  alt="BestMealMate"
+                  width={40}
+                  height={40}
+                  className="rounded-xl object-cover shadow-md"
+                />
                 <span className="text-xl font-bold text-white">BestMealMate</span>
               </div>
               <p className="text-gray-400">

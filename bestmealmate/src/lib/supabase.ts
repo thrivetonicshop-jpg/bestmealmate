@@ -38,6 +38,13 @@ export function isSupabaseConfigured(): boolean {
   return isValidSupabaseUrl(supabaseUrl) && supabaseAnonKey !== 'placeholder-key'
 }
 
+// Helper for tables not in auto-generated types (e.g., user_preferences, email_subscribers, etc.)
+// This allows calling .from() on tables that exist in the DB but not in the typed schema
+type AnyTableClient = {
+  from: (table: string) => ReturnType<typeof supabase.from>
+}
+const supabaseUntyped = supabase as unknown as AnyTableClient
+
 // Helper function for client-side use with validation
 export function getSupabase(): SupabaseClient<Database> {
   if (!isSupabaseConfigured() && isBrowser) {
@@ -282,4 +289,842 @@ export async function listFiles(bucket: BucketName, path: string = '') {
   }
 
   return data
+}
+
+// ============================================
+// EMAIL SUBSCRIBER HELPERS
+// ============================================
+
+export interface EmailSubscriber {
+  email: string
+  name?: string
+  source?: 'landing_page' | 'onboarding' | 'settings' | 'referral' | 'popup'
+  preferences?: {
+    weekly_tips?: boolean
+    new_features?: boolean
+    promotions?: boolean
+  }
+}
+
+/**
+ * Add email to subscriber list
+ */
+export async function subscribeEmail(subscriber: EmailSubscriber) {
+  const { data, error } = await supabaseUntyped
+    .from('email_subscribers')
+    .upsert({
+      email: subscriber.email.toLowerCase().trim(),
+      name: subscriber.name,
+      source: subscriber.source || 'landing_page',
+      preferences: subscriber.preferences || { weekly_tips: true, new_features: true, promotions: false },
+      is_subscribed: true,
+    }, {
+      onConflict: 'email'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error subscribing email:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Unsubscribe email from list
+ */
+export async function unsubscribeEmail(email: string) {
+  const { error } = await supabaseUntyped
+    .from('email_subscribers')
+    .update({
+      is_subscribed: false,
+      unsubscribed_at: new Date().toISOString(),
+    })
+    .eq('email', email.toLowerCase().trim())
+
+  if (error) {
+    console.error('Error unsubscribing email:', error)
+    throw error
+  }
+}
+
+// ============================================
+// USER PREFERENCES HELPERS
+// ============================================
+
+export interface UserPreferences {
+  theme?: 'light' | 'dark' | 'system'
+  language?: string
+  favorite_cuisines?: string[]
+  cooking_skill_level?: 'beginner' | 'intermediate' | 'advanced'
+  max_prep_time_minutes?: number
+  default_servings?: number
+  prefer_batch_cooking?: boolean
+  prefer_one_pot_meals?: boolean
+  preferred_grocery_stores?: string[]
+  budget_per_week?: number
+  prefer_organic?: boolean
+  prefer_local?: boolean
+  ai_memory?: Record<string, unknown>
+  email_notifications?: boolean
+  push_notifications?: boolean
+  meal_reminder_time?: string
+  grocery_reminder_day?: number
+}
+
+/**
+ * Get user preferences
+ */
+export async function getUserPreferences(userId: string): Promise<UserPreferences | null> {
+  const { data, error } = await supabaseUntyped
+    .from('user_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+    console.error('Error fetching user preferences:', error)
+  }
+
+  return data as UserPreferences | null
+}
+
+/**
+ * Update or create user preferences
+ */
+export async function saveUserPreferences(userId: string, householdId: string, preferences: UserPreferences) {
+  const { data, error } = await supabaseUntyped
+    .from('user_preferences')
+    .upsert({
+      user_id: userId,
+      household_id: householdId,
+      ...preferences,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'user_id'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving user preferences:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Update AI memory for a user (what the AI remembers about them)
+ */
+export async function updateAIMemory(userId: string, memory: Record<string, unknown>) {
+  const { data: existing } = await supabaseUntyped
+    .from('user_preferences')
+    .select('ai_memory')
+    .eq('user_id', userId)
+    .single()
+
+  const updatedMemory = {
+    ...(existing?.ai_memory as Record<string, unknown> || {}),
+    ...memory,
+    last_updated: new Date().toISOString(),
+  }
+
+  const { error } = await supabaseUntyped
+    .from('user_preferences')
+    .update({ ai_memory: updatedMemory })
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('Error updating AI memory:', error)
+    throw error
+  }
+}
+
+// ============================================
+// AI GENERATED MEALS HELPERS
+// ============================================
+
+export interface GeneratedMeal {
+  id?: string
+  household_id: string
+  user_id?: string
+  name: string
+  is_saved?: boolean
+  is_cooked?: boolean
+  rating?: number
+  created_at?: string
+  description?: string
+  meal_type?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'any'
+  cuisine?: string
+  prep_time?: string
+  cook_time?: string
+  total_time?: string
+  servings?: number
+  ingredients?: Array<{ name: string; amount: string; notes?: string }>
+  instructions?: string[]
+  calories_per_serving?: number
+  protein_per_serving?: number
+  carbs_per_serving?: number
+  fat_per_serving?: number
+  prompt_used?: string
+  dietary_restrictions?: string[]
+  pantry_items_used?: string[]
+}
+
+/**
+ * Save a generated meal to Supabase
+ */
+export async function saveGeneratedMeal(meal: GeneratedMeal): Promise<GeneratedMeal> {
+  const { data, error } = await supabaseUntyped
+    .from('ai_generated_meals')
+    .insert({
+      ...meal,
+      ingredients: meal.ingredients || [],
+      instructions: meal.instructions || [],
+      is_saved: true,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving generated meal:', error)
+    throw error
+  }
+
+  return data as unknown as GeneratedMeal
+}
+
+/**
+ * Get saved generated meals for a household
+ */
+export async function getSavedMeals(householdId: string, limit: number = 50) {
+  const { data, error } = await supabaseUntyped
+    .from('ai_generated_meals')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('is_saved', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching saved meals:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Rate a generated meal
+ */
+export async function rateMeal(mealId: string, rating: number, notes?: string) {
+  const { error } = await supabaseUntyped
+    .from('ai_generated_meals')
+    .update({
+      rating,
+      notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error rating meal:', error)
+    throw error
+  }
+}
+
+/**
+ * Mark a meal as cooked
+ */
+export async function markMealCooked(mealId: string) {
+  const { error } = await supabaseUntyped
+    .from('ai_generated_meals')
+    .update({
+      is_cooked: true,
+      cooked_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error marking meal as cooked:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete a generated meal
+ */
+export async function deleteGeneratedMeal(mealId: string) {
+  const { error } = await supabaseUntyped
+    .from('ai_generated_meals')
+    .delete()
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error deleting meal:', error)
+    throw error
+  }
+}
+
+// ============================================
+// USER PROFILE BACKUP HELPERS
+// ============================================
+
+/**
+ * Create a backup of user profile data
+ */
+export async function createProfileBackup(
+  userId: string,
+  householdId: string,
+  backupType: 'auto' | 'manual' | 'before_delete' = 'auto'
+) {
+  // Fetch all user data
+  const [household, familyMembers, preferences] = await Promise.all([
+    supabase.from('households').select('*').eq('id', householdId).single(),
+    supabase.from('family_members').select('*, dietary_restrictions(*), allergies(*), food_dislikes(*)').eq('household_id', householdId),
+    getUserPreferences(userId),
+  ])
+
+  const backupData = {
+    household: household.data,
+    family_members: familyMembers.data,
+    preferences,
+    backup_timestamp: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabaseUntyped
+    .from('user_profile_backups')
+    .insert({
+      user_id: userId,
+      household_id: householdId,
+      backup_data: backupData,
+      backup_type: backupType,
+      backup_size_bytes: JSON.stringify(backupData).length,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating profile backup:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Get latest profile backup for a user
+ */
+export async function getLatestBackup(userId: string) {
+  const { data, error } = await supabaseUntyped
+    .from('user_profile_backups')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching backup:', error)
+  }
+
+  return data
+}
+
+// ============================================
+// LOGIN TRACKING HELPERS
+// ============================================
+
+export interface LoginInfo {
+  user_id: string
+  email: string
+  login_method?: 'email' | 'google' | 'apple' | 'magic_link'
+  user_agent?: string
+  is_successful?: boolean
+  failure_reason?: string
+}
+
+/**
+ * Track a login attempt
+ */
+export async function trackLogin(loginInfo: LoginInfo) {
+  // Parse user agent for device info
+  const userAgent = loginInfo.user_agent || ''
+  let deviceType = 'desktop'
+  if (/mobile/i.test(userAgent)) deviceType = 'mobile'
+  else if (/tablet/i.test(userAgent)) deviceType = 'tablet'
+
+  const { error } = await supabaseUntyped
+    .from('login_history')
+    .insert({
+      user_id: loginInfo.user_id,
+      email: loginInfo.email,
+      login_method: loginInfo.login_method || 'email',
+      user_agent: loginInfo.user_agent,
+      device_type: deviceType,
+      is_successful: loginInfo.is_successful ?? true,
+      failure_reason: loginInfo.failure_reason,
+    })
+
+  if (error) {
+    console.error('Error tracking login:', error)
+    // Don't throw - login tracking shouldn't break the app
+  }
+}
+
+export interface LoginHistoryEntry {
+  id: string
+  user_id: string
+  created_at: string
+  device_type: string
+  login_method: string
+  ip_address?: string
+  user_agent?: string
+}
+
+/**
+ * Get login history for a user
+ */
+export async function getLoginHistory(userId: string, limit: number = 10): Promise<LoginHistoryEntry[]> {
+  const { data, error } = await supabaseUntyped
+    .from('login_history')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching login history:', error)
+  }
+
+  return (data || []) as unknown as LoginHistoryEntry[]
+}
+
+// ============================================
+// GROCERY LIST HELPERS
+// ============================================
+
+export interface GroceryItem {
+  id?: string
+  grocery_list_id?: string
+  name: string
+  quantity: string
+  aisle: string
+  is_purchased: boolean
+  notes?: string
+}
+
+export interface GroceryList {
+  id?: string
+  household_id: string
+  name: string
+  status: 'active' | 'shopping' | 'completed'
+  items?: GroceryItem[]
+  created_at?: string
+}
+
+/**
+ * Get all grocery lists for a household
+ */
+export async function getGroceryLists(householdId: string): Promise<Array<GroceryList & { grocery_items: GroceryItem[] }>> {
+  const { data, error } = await supabase
+    .from('grocery_lists')
+    .select('*, grocery_items(*)')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching grocery lists:', error)
+    throw error
+  }
+
+  // Cast to proper type since Supabase auto-generated types don't include the relation
+  return (data || []) as unknown as Array<GroceryList & { grocery_items: GroceryItem[] }>
+}
+
+/**
+ * Create a new grocery list
+ */
+export async function createGroceryList(list: GroceryList) {
+  const { data, error } = await supabase
+    .from('grocery_lists')
+    .insert({
+      household_id: list.household_id,
+      name: list.name,
+      status: list.status || 'active',
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating grocery list:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Update a grocery list
+ */
+export async function updateGroceryList(listId: string, updates: Partial<GroceryList>) {
+  const { error } = await supabase
+    .from('grocery_lists')
+    .update(updates)
+    .eq('id', listId)
+
+  if (error) {
+    console.error('Error updating grocery list:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete a grocery list
+ */
+export async function deleteGroceryList(listId: string) {
+  const { error } = await supabase
+    .from('grocery_lists')
+    .delete()
+    .eq('id', listId)
+
+  if (error) {
+    console.error('Error deleting grocery list:', error)
+    throw error
+  }
+}
+
+/**
+ * Add an item to a grocery list
+ */
+export async function addGroceryItem(listId: string, item: GroceryItem) {
+  const { data, error } = await supabaseUntyped
+    .from('grocery_items')
+    .insert({
+      grocery_list_id: listId,
+      name: item.name,
+      quantity: item.quantity,
+      aisle: item.aisle || 'Other',
+      is_purchased: item.is_purchased || false,
+      notes: item.notes,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error adding grocery item:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Update a grocery item
+ */
+export async function updateGroceryItem(itemId: string, updates: Partial<GroceryItem>) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .update(updates)
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Error updating grocery item:', error)
+    throw error
+  }
+}
+
+/**
+ * Toggle item purchased status
+ */
+export async function toggleGroceryItemPurchased(itemId: string, isPurchased: boolean) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .update({ is_purchased: isPurchased })
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Error toggling grocery item:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete a grocery item
+ */
+export async function deleteGroceryItem(itemId: string) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .delete()
+    .eq('id', itemId)
+
+  if (error) {
+    console.error('Error deleting grocery item:', error)
+    throw error
+  }
+}
+
+/**
+ * Clear all purchased items from a list
+ */
+export async function clearPurchasedItems(listId: string) {
+  const { error } = await supabaseUntyped
+    .from('grocery_items')
+    .delete()
+    .eq('grocery_list_id', listId)
+    .eq('is_purchased', true)
+
+  if (error) {
+    console.error('Error clearing purchased items:', error)
+    throw error
+  }
+}
+
+// ============================================
+// WEARABLE CONNECTION HELPERS
+// ============================================
+
+export interface WearableConnection {
+  id?: string
+  user_id: string
+  provider: string
+  access_token?: string
+  refresh_token?: string
+  is_active: boolean
+  last_sync_at?: string
+}
+
+export interface HealthMetric {
+  id?: string
+  user_id: string
+  connection_id: string
+  metric_type: 'steps' | 'calories_burned' | 'heart_rate' | 'sleep' | 'active_minutes' | 'weight'
+  value: number
+  unit: string
+  recorded_at: string
+  source: string
+}
+
+/**
+ * Get wearable connections for a user
+ */
+export async function getWearableConnections(userId: string): Promise<WearableConnection[]> {
+  const { data, error } = await supabaseUntyped
+    .from('wearable_connections')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching wearable connections:', error)
+  }
+
+  return (data || []) as unknown as WearableConnection[]
+}
+
+/**
+ * Save wearable connection
+ */
+export async function saveWearableConnection(connection: WearableConnection) {
+  const { data, error } = await supabaseUntyped
+    .from('wearable_connections')
+    .upsert({
+      user_id: connection.user_id,
+      provider: connection.provider,
+      access_token: connection.access_token,
+      refresh_token: connection.refresh_token,
+      is_active: connection.is_active,
+      last_sync_at: connection.last_sync_at,
+    }, {
+      onConflict: 'user_id,provider'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving wearable connection:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Save health metrics from wearables
+ */
+export async function saveHealthMetrics(metrics: HealthMetric[]) {
+  if (metrics.length === 0) return
+
+  const { error } = await supabaseUntyped
+    .from('health_metrics')
+    .insert(metrics.map(m => ({
+      user_id: m.user_id,
+      connection_id: m.connection_id,
+      metric_type: m.metric_type,
+      value: m.value,
+      unit: m.unit,
+      recorded_at: m.recorded_at,
+      source: m.source,
+    })))
+
+  if (error) {
+    console.error('Error saving health metrics:', error)
+    throw error
+  }
+}
+
+/**
+ * Get health metrics for a user
+ */
+export async function getHealthMetrics(userId: string, days: number = 7): Promise<HealthMetric[]> {
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - days)
+
+  const { data, error } = await supabaseUntyped
+    .from('health_metrics')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('recorded_at', startDate.toISOString())
+    .order('recorded_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching health metrics:', error)
+  }
+
+  return (data || []) as unknown as HealthMetric[]
+}
+
+// ============================================
+// MEAL PLAN HELPERS
+// ============================================
+
+export interface PlannedMeal {
+  id?: string
+  meal_plan_id: string
+  meal_date: string
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  recipe_id?: string | null
+  servings?: number
+  status?: 'planned' | 'cooked' | 'skipped'
+  notes?: string
+}
+
+export interface MealPlan {
+  id?: string
+  household_id: string
+  week_start_date: string
+  planned_meals?: PlannedMeal[]
+  created_at?: string
+  updated_at?: string
+}
+
+/**
+ * Get current week's meal plan for a household
+ */
+export async function getActiveMealPlan(householdId: string): Promise<MealPlan | null> {
+  // Get the start of the current week (Monday)
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+  const startOfWeek = new Date(today)
+  startOfWeek.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+  const weekStart = startOfWeek.toISOString().split('T')[0]
+
+  const { data, error } = await supabase
+    .from('meal_plans')
+    .select('*, planned_meals(*)')
+    .eq('household_id', householdId)
+    .eq('week_start_date', weekStart)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching active meal plan:', error)
+  }
+
+  return data as unknown as MealPlan | null
+}
+
+/**
+ * Create or update meal plan
+ */
+export async function saveMealPlan(plan: MealPlan): Promise<MealPlan> {
+  const { data, error } = await supabase
+    .from('meal_plans')
+    .upsert({
+      id: plan.id,
+      household_id: plan.household_id,
+      week_start_date: plan.week_start_date,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving meal plan:', error)
+    throw error
+  }
+
+  return data as unknown as MealPlan
+}
+
+/**
+ * Add or update planned meal
+ */
+export async function savePlannedMeal(meal: PlannedMeal) {
+  const { data, error } = await supabase
+    .from('planned_meals')
+    .upsert({
+      id: meal.id,
+      meal_plan_id: meal.meal_plan_id,
+      meal_date: meal.meal_date,
+      meal_type: meal.meal_type,
+      recipe_id: meal.recipe_id,
+      servings: meal.servings || 4,
+      status: meal.status || 'planned',
+      notes: meal.notes,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving planned meal:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Delete a planned meal
+ */
+export async function deletePlannedMeal(mealId: string) {
+  const { error } = await supabase
+    .from('planned_meals')
+    .delete()
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error deleting planned meal:', error)
+    throw error
+  }
+}
+
+/**
+ * Get meal plan history for a household
+ */
+export async function getMealPlanHistory(householdId: string, limit: number = 10): Promise<MealPlan[]> {
+  const { data, error } = await supabase
+    .from('meal_plans')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching meal plan history:', error)
+  }
+
+  return (data || []) as unknown as MealPlan[]
 }
