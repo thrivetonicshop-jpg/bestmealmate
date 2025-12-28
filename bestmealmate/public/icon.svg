@@ -1,32 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <!-- Background -->
-  <rect width="64" height="64" rx="14" fill="#22c55e"/>
-
-  <!-- Plate -->
-  <circle cx="32" cy="32" r="22" fill="white" opacity="0.95"/>
-
-  <!-- Food -->
-  <ellipse cx="32" cy="30" rx="12" ry="8" fill="#fbbf24"/>
-  <ellipse cx="32" cy="28" rx="9" ry="6" fill="#fcd34d"/>
-
-  <!-- Vegetables -->
-  <circle cx="24" cy="38" r="4" fill="#22c55e"/>
-  <circle cx="40" cy="38" r="4" fill="#22c55e"/>
-  <circle cx="32" cy="42" r="3" fill="#16a34a"/>
-
-  <!-- Steam -->
-  <path d="M27 12 Q25 8 27 5" stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M32 10 Q30 6 32 3" stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
-  <path d="M37 12 Q35 8 37 5" stroke="white" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6"/>
-
-  <!-- AI sparkle -->
-  <circle cx="52" cy="12" r="8" fill="url(#sparkleGrad)"/>
-  <path d="M52 6 L53 10 L57 11 L53 12 L52 16 L51 12 L47 11 L51 10 Z" fill="white"/>
-
   <defs>
-    <linearGradient id="sparkleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e"/>
+      <stop offset="100%" style="stop-color:#16a34a"/>
+    </linearGradient>
+    <linearGradient id="sparkle" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#a855f7"/>
       <stop offset="100%" style="stop-color:#ec4899"/>
     </linearGradient>
   </defs>
+
+  <!-- Background -->
+  <rect width="64" height="64" rx="16" fill="url(#bgGrad)"/>
+
+  <!-- Fork (left) -->
+  <g transform="translate(14, 12)">
+    <rect x="0" y="0" width="3" height="28" rx="1.5" fill="white"/>
+    <rect x="-3" y="0" width="2" height="10" rx="1" fill="white"/>
+    <rect x="4" y="0" width="2" height="10" rx="1" fill="white"/>
+  </g>
+
+  <!-- Knife (right) -->
+  <g transform="translate(44, 12)">
+    <path d="M0 0 L6 0 L6 8 C6 12 3 14 3 14 L3 28 L0 28 L0 14 C0 14 0 12 0 8 Z" fill="white"/>
+  </g>
+
+  <!-- Center plate/heart -->
+  <circle cx="32" cy="36" r="14" fill="white" opacity="0.95"/>
+  <path d="M32 30 C28 26 22 28 22 33 C22 38 32 46 32 46 C32 46 42 38 42 33 C42 28 36 26 32 30" fill="#ef4444"/>
+
+  <!-- AI sparkle badge -->
+  <circle cx="52" cy="12" r="9" fill="url(#sparkle)"/>
+  <path d="M52 5 L53.5 10 L58 11.5 L53.5 13 L52 18 L50.5 13 L46 11.5 L50.5 10 Z" fill="white"/>
 </svg>
