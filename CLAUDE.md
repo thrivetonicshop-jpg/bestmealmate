@@ -40,7 +40,12 @@ bestmealmate/              # Main Next.js app (Vercel Root Directory)
 │       └── database.types.ts   # TypeScript types
 ├── supabase/
 │   └── schema.sql              # Database schema
+├── e2e/                        # Playwright e2e tests
+│   ├── landing.spec.ts         # Landing page tests
+│   ├── auth.spec.ts            # Authentication tests
+│   └── onboarding.spec.ts      # Onboarding tests
 ├── middleware.ts               # Route protection
+├── playwright.config.ts        # Playwright configuration
 ├── vercel.json                 # Vercel deployment config
 └── .env.example                # Environment variables template
 ```
@@ -76,6 +81,8 @@ npm install
 npm run dev      # Start dev server at localhost:3000
 npm run build    # Production build
 npm run lint     # Run ESLint
+npm test         # Run Playwright e2e tests
+npm run test:ui  # Run tests with interactive UI
 ```
 
 ## Vercel Deployment
@@ -113,6 +120,41 @@ Edit `src/lib/auth-context.tsx` and `src/middleware.ts`.
 - `invoice.payment_failed` - Payment failed
 
 ## Testing
+
+### E2E Testing with Playwright
+BestMealMate uses Playwright for end-to-end testing. Tests are located in `bestmealmate/e2e/`.
+
+```bash
+cd bestmealmate
+
+# Install Playwright browsers (first time only)
+npx playwright install
+
+# Run all tests
+npm test
+
+# Run tests with UI mode (interactive)
+npm run test:ui
+
+# Run tests in headed mode (see browser)
+npm run test:headed
+
+# Run a specific test file
+npx playwright test e2e/landing.spec.ts
+
+# Run tests in a specific browser
+npx playwright test --project=chromium
+```
+
+**Test Files:**
+- `e2e/landing.spec.ts` - Landing page tests
+- `e2e/auth.spec.ts` - Authentication flow tests
+- `e2e/onboarding.spec.ts` - Onboarding page tests
+
+**Adding New Tests:**
+Create new test files in `e2e/` with the `.spec.ts` extension.
+
+### Stripe Testing
 Use Stripe test mode with `sk_test_` keys. Test cards:
 - Success: 4242 4242 4242 4242
 - Decline: 4000 0000 0000 0002
