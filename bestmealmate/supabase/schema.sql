@@ -667,3 +667,210 @@ CREATE POLICY "Users can delete meal plan images" ON storage.objects
     bucket_id = 'meal-plans' AND
     auth.uid() IS NOT NULL
   );
+
+-- ============================================
+-- EMAIL SUBSCRIBERS (for marketing/newsletter)
+-- ============================================
+CREATE TABLE email_subscribers (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) NOT NULL UNIQUE,
+  name VARCHAR(255),
+  source VARCHAR(100) DEFAULT 'landing_page',
+  -- Sources: landing_page, onboarding, settings, referral, popup
+  is_verified BOOLEAN DEFAULT FALSE,
+  is_subscribed BOOLEAN DEFAULT TRUE,
+  verification_token UUID DEFAULT uuid_generate_v4(),
+  verified_at TIMESTAMP WITH TIME ZONE,
+  unsubscribed_at TIMESTAMP WITH TIME ZONE,
+  preferences JSONB DEFAULT '{"weekly_tips": true, "new_features": true, "promotions": false}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_email_subscribers_email ON email_subscribers(email);
+CREATE INDEX idx_email_subscribers_verified ON email_subscribers(is_verified);
+
+-- ============================================
+-- USER PREFERENCES & MEMORY (remember user info)
+-- ============================================
+CREATE TABLE user_preferences (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
+  household_id UUID REFERENCES households(id) ON DELETE CASCADE,
+  -- UI Preferences
+  theme VARCHAR(20) DEFAULT 'light' CHECK (theme IN ('light', 'dark', 'system')),
+  language VARCHAR(10) DEFAULT 'en',
+  -- Meal Preferences
+  favorite_cuisines TEXT[] DEFAULT '{}',
+  cooking_skill_level VARCHAR(20) DEFAULT 'intermediate' CHECK (cooking_skill_level IN ('beginner', 'intermediate', 'advanced')),
+  max_prep_time_minutes INTEGER DEFAULT 60,
+  default_servings INTEGER DEFAULT 4,
+  prefer_batch_cooking BOOLEAN DEFAULT FALSE,
+  prefer_one_pot_meals BOOLEAN DEFAULT FALSE,
+  -- Shopping Preferences
+  preferred_grocery_stores TEXT[] DEFAULT '{}',
+  budget_per_week DECIMAL(10,2),
+  prefer_organic BOOLEAN DEFAULT FALSE,
+  prefer_local BOOLEAN DEFAULT FALSE,
+  -- AI Memory (what the AI remembers about the user)
+  ai_memory JSONB DEFAULT '{}'::jsonb,
+  -- Example: {"last_meal_request": "quick weeknight dinners", "cooking_style": "simple", "flavor_preferences": ["spicy", "savory"]}
+  -- Notification Preferences
+  email_notifications BOOLEAN DEFAULT TRUE,
+  push_notifications BOOLEAN DEFAULT TRUE,
+  meal_reminder_time TIME DEFAULT '17:00',
+  grocery_reminder_day INTEGER DEFAULT 0, -- 0 = Sunday
+  -- Last Activity
+  last_login_at TIMESTAMP WITH TIME ZONE,
+  last_meal_plan_at TIMESTAMP WITH TIME ZONE,
+  -- Metadata
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_user_preferences_user ON user_preferences(user_id);
+CREATE INDEX idx_user_preferences_household ON user_preferences(household_id);
+
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own preferences" ON user_preferences
+  FOR ALL USING (user_id = auth.uid());
+
+CREATE TRIGGER update_user_preferences_updated_at BEFORE UPDATE ON user_preferences FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- AI GENERATED MEALS (save generated meal suggestions)
+-- ============================================
+CREATE TABLE ai_generated_meals (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  household_id UUID REFERENCES households(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  -- Meal Info
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  meal_type VARCHAR(50) CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack', 'any')),
+  cuisine VARCHAR(100),
+  prep_time VARCHAR(50),
+  cook_time VARCHAR(50),
+  total_time VARCHAR(50),
+  servings INTEGER DEFAULT 4,
+  -- Ingredients & Instructions
+  ingredients JSONB DEFAULT '[]'::jsonb,
+  -- Example: [{"name": "chicken", "amount": "1 lb", "notes": "boneless"}]
+  instructions JSONB DEFAULT '[]'::jsonb,
+  -- Example: ["Preheat oven to 400°F", "Season chicken..."]
+  -- Nutrition
+  calories_per_serving INTEGER,
+  protein_per_serving INTEGER,
+  carbs_per_serving INTEGER,
+  fat_per_serving INTEGER,
+  -- AI Context
+  prompt_used TEXT,
+  dietary_restrictions TEXT[] DEFAULT '{}',
+  pantry_items_used TEXT[] DEFAULT '{}',
+  -- User Feedback
+  is_saved BOOLEAN DEFAULT FALSE,
+  is_cooked BOOLEAN DEFAULT FALSE,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  notes TEXT,
+  cooked_at TIMESTAMP WITH TIME ZONE,
+  -- Metadata
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_ai_generated_meals_household ON ai_generated_meals(household_id);
+CREATE INDEX idx_ai_generated_meals_user ON ai_generated_meals(user_id);
+CREATE INDEX idx_ai_generated_meals_saved ON ai_generated_meals(is_saved);
+CREATE INDEX idx_ai_generated_meals_created ON ai_generated_meals(created_at);
+
+ALTER TABLE ai_generated_meals ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own generated meals" ON ai_generated_meals
+  FOR SELECT USING (
+    household_id IN (
+      SELECT household_id FROM family_members WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can insert generated meals" ON ai_generated_meals
+  FOR INSERT WITH CHECK (
+    household_id IN (
+      SELECT household_id FROM family_members WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can update own generated meals" ON ai_generated_meals
+  FOR UPDATE USING (
+    household_id IN (
+      SELECT household_id FROM family_members WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can delete own generated meals" ON ai_generated_meals
+  FOR DELETE USING (
+    household_id IN (
+      SELECT household_id FROM family_members WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE TRIGGER update_ai_generated_meals_updated_at BEFORE UPDATE ON ai_generated_meals FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- USER PROFILE BACKUPS (stores complete profile snapshots)
+-- ============================================
+CREATE TABLE user_profile_backups (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  household_id UUID REFERENCES households(id) ON DELETE SET NULL,
+  -- Backup Data
+  backup_data JSONB NOT NULL,
+  -- Contains: household info, family members, dietary restrictions, allergies, preferences
+  backup_type VARCHAR(50) DEFAULT 'auto' CHECK (backup_type IN ('auto', 'manual', 'before_delete')),
+  backup_size_bytes INTEGER,
+  -- Metadata
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_user_profile_backups_user ON user_profile_backups(user_id);
+CREATE INDEX idx_user_profile_backups_created ON user_profile_backups(created_at);
+
+ALTER TABLE user_profile_backups ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own backups" ON user_profile_backups
+  FOR ALL USING (user_id = auth.uid());
+
+-- ============================================
+-- LOGIN HISTORY (track user logins for security)
+-- ============================================
+CREATE TABLE login_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  email VARCHAR(255),
+  login_method VARCHAR(50) DEFAULT 'email',
+  -- Methods: email, google, apple, magic_link
+  ip_address INET,
+  user_agent TEXT,
+  device_type VARCHAR(50),
+  -- Types: mobile, tablet, desktop
+  browser VARCHAR(100),
+  os VARCHAR(100),
+  country VARCHAR(100),
+  city VARCHAR(100),
+  is_successful BOOLEAN DEFAULT TRUE,
+  failure_reason TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_login_history_user ON login_history(user_id);
+CREATE INDEX idx_login_history_created ON login_history(created_at);
+CREATE INDEX idx_login_history_email ON login_history(email);
+
+ALTER TABLE login_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own login history" ON login_history
+  FOR SELECT USING (user_id = auth.uid());
+
+-- Insert policy for login tracking (allow inserts during auth)
+CREATE POLICY "Allow login tracking" ON login_history
+  FOR INSERT WITH CHECK (true);

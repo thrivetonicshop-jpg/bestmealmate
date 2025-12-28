@@ -283,3 +283,401 @@ export async function listFiles(bucket: BucketName, path: string = '') {
 
   return data
 }
+
+// ============================================
+// EMAIL SUBSCRIBER HELPERS
+// ============================================
+
+export interface EmailSubscriber {
+  email: string
+  name?: string
+  source?: 'landing_page' | 'onboarding' | 'settings' | 'referral' | 'popup'
+  preferences?: {
+    weekly_tips?: boolean
+    new_features?: boolean
+    promotions?: boolean
+  }
+}
+
+/**
+ * Add email to subscriber list
+ */
+export async function subscribeEmail(subscriber: EmailSubscriber) {
+  const { data, error } = await supabase
+    .from('email_subscribers')
+    .upsert({
+      email: subscriber.email.toLowerCase().trim(),
+      name: subscriber.name,
+      source: subscriber.source || 'landing_page',
+      preferences: subscriber.preferences || { weekly_tips: true, new_features: true, promotions: false },
+      is_subscribed: true,
+    }, {
+      onConflict: 'email'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error subscribing email:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Unsubscribe email from list
+ */
+export async function unsubscribeEmail(email: string) {
+  const { error } = await supabase
+    .from('email_subscribers')
+    .update({
+      is_subscribed: false,
+      unsubscribed_at: new Date().toISOString(),
+    })
+    .eq('email', email.toLowerCase().trim())
+
+  if (error) {
+    console.error('Error unsubscribing email:', error)
+    throw error
+  }
+}
+
+// ============================================
+// USER PREFERENCES HELPERS
+// ============================================
+
+export interface UserPreferences {
+  theme?: 'light' | 'dark' | 'system'
+  language?: string
+  favorite_cuisines?: string[]
+  cooking_skill_level?: 'beginner' | 'intermediate' | 'advanced'
+  max_prep_time_minutes?: number
+  default_servings?: number
+  prefer_batch_cooking?: boolean
+  prefer_one_pot_meals?: boolean
+  preferred_grocery_stores?: string[]
+  budget_per_week?: number
+  prefer_organic?: boolean
+  prefer_local?: boolean
+  ai_memory?: Record<string, unknown>
+  email_notifications?: boolean
+  push_notifications?: boolean
+  meal_reminder_time?: string
+  grocery_reminder_day?: number
+}
+
+/**
+ * Get user preferences
+ */
+export async function getUserPreferences(userId: string) {
+  const { data, error } = await supabase
+    .from('user_preferences')
+    .select('*')
+    .eq('user_id', userId)
+    .single()
+
+  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+    console.error('Error fetching user preferences:', error)
+  }
+
+  return data
+}
+
+/**
+ * Update or create user preferences
+ */
+export async function saveUserPreferences(userId: string, householdId: string, preferences: UserPreferences) {
+  const { data, error } = await supabase
+    .from('user_preferences')
+    .upsert({
+      user_id: userId,
+      household_id: householdId,
+      ...preferences,
+      updated_at: new Date().toISOString(),
+    }, {
+      onConflict: 'user_id'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving user preferences:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Update AI memory for a user (what the AI remembers about them)
+ */
+export async function updateAIMemory(userId: string, memory: Record<string, unknown>) {
+  const { data: existing } = await supabase
+    .from('user_preferences')
+    .select('ai_memory')
+    .eq('user_id', userId)
+    .single()
+
+  const updatedMemory = {
+    ...(existing?.ai_memory as Record<string, unknown> || {}),
+    ...memory,
+    last_updated: new Date().toISOString(),
+  }
+
+  const { error } = await supabase
+    .from('user_preferences')
+    .update({ ai_memory: updatedMemory })
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error('Error updating AI memory:', error)
+    throw error
+  }
+}
+
+// ============================================
+// AI GENERATED MEALS HELPERS
+// ============================================
+
+export interface GeneratedMeal {
+  household_id: string
+  user_id?: string
+  name: string
+  description?: string
+  meal_type?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'any'
+  cuisine?: string
+  prep_time?: string
+  cook_time?: string
+  total_time?: string
+  servings?: number
+  ingredients?: Array<{ name: string; amount: string; notes?: string }>
+  instructions?: string[]
+  calories_per_serving?: number
+  protein_per_serving?: number
+  carbs_per_serving?: number
+  fat_per_serving?: number
+  prompt_used?: string
+  dietary_restrictions?: string[]
+  pantry_items_used?: string[]
+}
+
+/**
+ * Save a generated meal to Supabase
+ */
+export async function saveGeneratedMeal(meal: GeneratedMeal) {
+  const { data, error } = await supabase
+    .from('ai_generated_meals')
+    .insert({
+      ...meal,
+      ingredients: meal.ingredients || [],
+      instructions: meal.instructions || [],
+      is_saved: true,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving generated meal:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Get saved generated meals for a household
+ */
+export async function getSavedMeals(householdId: string, limit: number = 50) {
+  const { data, error } = await supabase
+    .from('ai_generated_meals')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('is_saved', true)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching saved meals:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Rate a generated meal
+ */
+export async function rateMeal(mealId: string, rating: number, notes?: string) {
+  const { error } = await supabase
+    .from('ai_generated_meals')
+    .update({
+      rating,
+      notes,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error rating meal:', error)
+    throw error
+  }
+}
+
+/**
+ * Mark a meal as cooked
+ */
+export async function markMealCooked(mealId: string) {
+  const { error } = await supabase
+    .from('ai_generated_meals')
+    .update({
+      is_cooked: true,
+      cooked_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error marking meal as cooked:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete a generated meal
+ */
+export async function deleteGeneratedMeal(mealId: string) {
+  const { error } = await supabase
+    .from('ai_generated_meals')
+    .delete()
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error deleting meal:', error)
+    throw error
+  }
+}
+
+// ============================================
+// USER PROFILE BACKUP HELPERS
+// ============================================
+
+/**
+ * Create a backup of user profile data
+ */
+export async function createProfileBackup(
+  userId: string,
+  householdId: string,
+  backupType: 'auto' | 'manual' | 'before_delete' = 'auto'
+) {
+  // Fetch all user data
+  const [household, familyMembers, preferences] = await Promise.all([
+    supabase.from('households').select('*').eq('id', householdId).single(),
+    supabase.from('family_members').select('*, dietary_restrictions(*), allergies(*), food_dislikes(*)').eq('household_id', householdId),
+    getUserPreferences(userId),
+  ])
+
+  const backupData = {
+    household: household.data,
+    family_members: familyMembers.data,
+    preferences,
+    backup_timestamp: new Date().toISOString(),
+  }
+
+  const { data, error } = await supabase
+    .from('user_profile_backups')
+    .insert({
+      user_id: userId,
+      household_id: householdId,
+      backup_data: backupData,
+      backup_type: backupType,
+      backup_size_bytes: JSON.stringify(backupData).length,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error creating profile backup:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Get latest profile backup for a user
+ */
+export async function getLatestBackup(userId: string) {
+  const { data, error } = await supabase
+    .from('user_profile_backups')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching backup:', error)
+  }
+
+  return data
+}
+
+// ============================================
+// LOGIN TRACKING HELPERS
+// ============================================
+
+export interface LoginInfo {
+  user_id: string
+  email: string
+  login_method?: 'email' | 'google' | 'apple' | 'magic_link'
+  user_agent?: string
+  is_successful?: boolean
+  failure_reason?: string
+}
+
+/**
+ * Track a login attempt
+ */
+export async function trackLogin(loginInfo: LoginInfo) {
+  // Parse user agent for device info
+  const userAgent = loginInfo.user_agent || ''
+  let deviceType = 'desktop'
+  if (/mobile/i.test(userAgent)) deviceType = 'mobile'
+  else if (/tablet/i.test(userAgent)) deviceType = 'tablet'
+
+  const { error } = await supabase
+    .from('login_history')
+    .insert({
+      user_id: loginInfo.user_id,
+      email: loginInfo.email,
+      login_method: loginInfo.login_method || 'email',
+      user_agent: loginInfo.user_agent,
+      device_type: deviceType,
+      is_successful: loginInfo.is_successful ?? true,
+      failure_reason: loginInfo.failure_reason,
+    })
+
+  if (error) {
+    console.error('Error tracking login:', error)
+    // Don't throw - login tracking shouldn't break the app
+  }
+}
+
+/**
+ * Get login history for a user
+ */
+export async function getLoginHistory(userId: string, limit: number = 10) {
+  const { data, error } = await supabase
+    .from('login_history')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching login history:', error)
+  }
+
+  return data || []
+}
