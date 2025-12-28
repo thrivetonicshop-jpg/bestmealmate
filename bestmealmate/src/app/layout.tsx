@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/lib/auth-context'
+import PushNotificationPrompt from '@/components/PushNotificationPrompt'
+import { WebVitals } from '@/components/WebVitals'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -359,6 +361,24 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+        {/* Google Analytics 4 */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-XXXXXXXXXX', {
+                page_title: document.title,
+                page_location: window.location.href,
+              });
+            `,
+          }}
+        />
         {/* Google AdSense */}
         <meta name="google-adsense-account" content="ca-pub-3073911588578821" />
         <script
@@ -369,7 +389,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-white antialiased">
         <AuthProvider>
+          <WebVitals />
           {children}
+          <PushNotificationPrompt />
           <Toaster
             position="top-center"
             toastOptions={{

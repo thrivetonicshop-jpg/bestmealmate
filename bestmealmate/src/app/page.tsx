@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import EmailCapture from '@/components/EmailCapture'
 import {
   ChefHat,
   Users,
@@ -219,6 +220,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden">
+      {/* Email Capture Popup */}
+      <EmailCapture />
+
       {/* Navigation */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled ? 'glass-dark shadow-lg' : 'bg-transparent'
