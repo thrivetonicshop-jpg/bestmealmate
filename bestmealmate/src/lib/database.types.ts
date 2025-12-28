@@ -616,3 +616,62 @@ export type Ingredient = Tables<'ingredients'>
 export type Allergy = Tables<'allergies'>
 export type DietaryRestriction = Tables<'dietary_restrictions'>
 export type FoodDislike = Tables<'food_dislikes'>
+
+// Wearable device types
+export type WearableProvider = 'apple_health' | 'fitbit' | 'garmin' | 'google_fit' | 'samsung_health'
+
+export type HealthMetricType =
+  | 'steps'
+  | 'calories_burned'
+  | 'active_minutes'
+  | 'heart_rate'
+  | 'heart_rate_resting'
+  | 'sleep_hours'
+  | 'sleep_quality'
+  | 'weight'
+  | 'body_fat_percentage'
+  | 'water_intake'
+  | 'distance_km'
+  | 'floors_climbed'
+
+export interface WearableConnection {
+  id: string
+  family_member_id: string
+  provider: WearableProvider
+  access_token: string | null
+  refresh_token: string | null
+  expires_at: string | null
+  is_active: boolean
+  last_sync_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface HealthMetric {
+  id: string
+  family_member_id: string
+  wearable_connection_id: string | null
+  metric_type: HealthMetricType
+  value: number
+  unit: string | null
+  recorded_at: string
+  source: string | null
+  created_at: string
+}
+
+export interface DailyHealthSummary {
+  id: string
+  family_member_id: string
+  date: string
+  steps: number | null
+  calories_burned: number | null
+  active_minutes: number | null
+  sleep_hours: number | null
+  avg_heart_rate: number | null
+  resting_heart_rate: number | null
+  water_intake_ml: number | null
+  weight_kg: number | null
+  body_fat_percentage: number | null
+  created_at: string
+  updated_at: string
+}
