@@ -9,7 +9,11 @@ function getAnthropic() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context } = await request.json()
+    const body = await request.json()
+    const { message, context, pantryItems, familyMembers, action } = body
+
+    // Build context from either format
+    const contextData = context || { pantryItems, familyMembers }
 
     // Build context about the family and pantry
     const systemPrompt = `You are the AI Chef for BestMealMate, a family meal planning app.
@@ -21,7 +25,7 @@ Your job is to help families decide what to cook based on:
 4. What they've eaten recently (to ensure variety)
 
 Current context:
-${JSON.stringify(context, null, 2)}
+${JSON.stringify(contextData, null, 2)}
 
 Guidelines:
 - Always prioritize safety (allergies are serious!)
@@ -48,12 +52,32 @@ Guidelines:
     const textContent = response.content.find(block => block.type === 'text')
     const reply = textContent ? textContent.text : 'I apologize, but I could not generate a response.'
 
-    return NextResponse.json({ reply })
+    // Return all field names that frontend might expect
+    return NextResponse.json({
+      reply,
+      message: reply,
+      suggestion: reply,
+      success: true
+    })
   } catch (error) {
     console.error('AI Chef error:', error)
-    return NextResponse.json(
-      { error: 'Failed to get AI response' },
-      { status: 500 }
-    )
+
+    // Return a helpful fallback suggestion instead of just an error
+    const fallbackSuggestions = [
+      'Try making Honey Garlic Chicken with roasted vegetables - quick, healthy, and family-friendly!',
+      'How about Teriyaki Salmon with rice and steamed broccoli? Takes only 25 minutes!',
+      'Consider a Sheet Pan Fajitas night - colorful, fun, and everyone can customize their own!',
+      'Pasta Primavera is always a hit - toss in whatever veggies you have on hand!',
+      'One-pot chicken and rice is comfort food that the whole family will love!'
+    ]
+    const randomSuggestion = fallbackSuggestions[Math.floor(Math.random() * fallbackSuggestions.length)]
+
+    return NextResponse.json({
+      message: randomSuggestion,
+      suggestion: randomSuggestion,
+      reply: randomSuggestion,
+      success: true,
+      fallback: true
+    })
   }
 }

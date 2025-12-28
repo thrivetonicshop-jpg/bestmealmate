@@ -43,6 +43,31 @@ export default function HomePage() {
   const [showSocialProof, setShowSocialProof] = useState(false)
   const [currentProof, setCurrentProof] = useState(0)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [showMealPlanModal, setShowMealPlanModal] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedMeal, setGeneratedMeal] = useState<{name: string, time: string, description: string, ingredients: string[]} | null>(null)
+
+  const mealSuggestions = [
+    { name: "Honey Garlic Chicken", time: "30 min", description: "Tender chicken thighs glazed with a sweet and savory honey garlic sauce, served with steamed broccoli.", ingredients: ["Chicken thighs", "Honey", "Garlic", "Soy sauce", "Broccoli"] },
+    { name: "Sheet Pan Salmon", time: "25 min", description: "Perfectly roasted salmon with lemon herb butter, surrounded by colorful roasted vegetables.", ingredients: ["Salmon fillets", "Lemon", "Butter", "Asparagus", "Cherry tomatoes"] },
+    { name: "One-Pot Pasta Primavera", time: "20 min", description: "Creamy pasta loaded with fresh seasonal vegetables in a light garlic parmesan sauce.", ingredients: ["Penne pasta", "Zucchini", "Bell peppers", "Parmesan", "Heavy cream"] },
+    { name: "Turkey Taco Bowls", time: "25 min", description: "Flavorful seasoned ground turkey over rice with all your favorite taco toppings.", ingredients: ["Ground turkey", "Taco seasoning", "Rice", "Black beans", "Avocado"] },
+    { name: "Teriyaki Stir Fry", time: "20 min", description: "Quick and healthy stir fry with crisp vegetables and your choice of protein in homemade teriyaki sauce.", ingredients: ["Chicken or tofu", "Broccoli", "Snap peas", "Carrots", "Teriyaki sauce"] }
+  ]
+
+  const generateMealPlan = async () => {
+    setShowMealPlanModal(true)
+    setIsGenerating(true)
+    setGeneratedMeal(null)
+
+    // Simulate API call with timeout
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Pick a random meal
+    const randomMeal = mealSuggestions[Math.floor(Math.random() * mealSuggestions.length)]
+    setGeneratedMeal(randomMeal)
+    setIsGenerating(false)
+  }
 
   const socialProofNotifications = [
     { name: "Sarah from Texas", action: "just signed up", time: "2 minutes ago", emoji: "👩" },
@@ -312,13 +337,21 @@ export default function HomePage() {
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <button
-                  onClick={() => setShowDemoVideo(true)}
-                  className="btn-secondary text-lg px-8 py-4 flex items-center justify-center gap-2"
+                  onClick={generateMealPlan}
+                  className="btn-secondary text-lg px-8 py-4 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:shadow-lg"
                 >
-                  <Play className="w-5 h-5" />
-                  Watch Demo
+                  <Sparkles className="w-5 h-5" />
+                  Generate My Meal Plan
                 </button>
               </div>
+
+              <button
+                onClick={() => setShowDemoVideo(true)}
+                className="mt-4 text-brand-600 font-medium flex items-center gap-2 justify-center lg:justify-start hover:text-brand-700 transition-colors animate-fade-in animate-delay-300"
+              >
+                <Play className="w-4 h-4" />
+                Watch 60-second demo
+              </button>
 
               <p className="mt-6 text-sm text-gray-500 flex items-center gap-4 justify-center lg:justify-start animate-fade-in animate-delay-300">
                 <span className="flex items-center gap-1">
@@ -1387,6 +1420,95 @@ export default function HomePage() {
                 allowFullScreen
                 className="w-full h-full"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Meal Plan Modal */}
+      {showMealPlanModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={() => setShowMealPlanModal(false)}
+        >
+          <div
+            className="relative w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl">AI Meal Generator</h3>
+                    <p className="text-sm text-white/80">Personalized just for you</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMealPlanModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {isGenerating ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin" />
+                  <p className="text-gray-600 font-medium">Generating your perfect meal...</p>
+                  <p className="text-sm text-gray-400 mt-2">Analyzing preferences & ingredients</p>
+                </div>
+              ) : generatedMeal ? (
+                <>
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5 mb-5 border border-purple-100">
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                        🍽️
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-xl text-gray-900">{generatedMeal.name}</h4>
+                        <p className="text-sm text-purple-600 font-medium flex items-center gap-2 mt-1">
+                          <Clock className="w-4 h-4" />
+                          {generatedMeal.time}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-gray-600">{generatedMeal.description}</p>
+                  </div>
+
+                  <div className="mb-5">
+                    <h5 className="font-semibold text-gray-900 mb-3">Ingredients Needed:</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {generatedMeal.ingredients.map((ingredient, i) => (
+                        <span key={i} className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+                          {ingredient}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Link
+                      href="/onboarding"
+                      className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-center hover:shadow-lg transition-all"
+                    >
+                      Start Planning Free
+                    </Link>
+                    <button
+                      onClick={generateMealPlan}
+                      className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                    </button>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         </div>
