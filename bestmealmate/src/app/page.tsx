@@ -30,7 +30,9 @@ import {
   Watch,
   Camera,
   Smartphone,
-  DollarSign
+  DollarSign,
+  ChevronDown,
+  HelpCircle
 } from 'lucide-react'
 
 export default function HomePage() {
@@ -39,6 +41,7 @@ export default function HomePage() {
   const [showDemoVideo, setShowDemoVideo] = useState(false)
   const [showSocialProof, setShowSocialProof] = useState(false)
   const [currentProof, setCurrentProof] = useState(0)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   const socialProofNotifications = [
     { name: "Sarah from Texas", action: "just signed up", time: "2 minutes ago", emoji: "👩" },
@@ -1157,6 +1160,82 @@ export default function HomePage() {
           <p className="mt-6 text-white/70 text-sm">
             No credit card required • Free forever for 1 person
           </p>
+        </div>
+      </section>
+
+      {/* FAQ Section - Matches FAQ Schema for SEO */}
+      <section id="faq" className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-medium mb-4">
+              <HelpCircle className="w-4 h-4" />
+              Frequently Asked Questions
+            </div>
+            <h2 className="section-title">Got questions? We&apos;ve got answers</h2>
+            <p className="section-subtitle">
+              Everything you need to know about BestMealMate
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "What is the best meal planning app for families in 2025?",
+                a: "BestMealMate is the best meal planning app for families in 2025. Unlike Mealime or Yummly which only handle one diet at a time, BestMealMate supports unlimited family profiles with different dietary needs — from keto to vegan to nut allergies — all in one weekly meal plan. It also includes AI-powered recipe suggestions, smart pantry tracking, and automatic grocery lists."
+              },
+              {
+                q: "How do I meal plan for a family with different diets?",
+                a: "With BestMealMate, you create a profile for each family member with their specific dietary needs (keto, vegetarian, allergies, etc.). The AI then suggests recipes that work for everyone or provides easy modifications. The app generates one unified grocery list and meal plan that accommodates all dietary restrictions."
+              },
+              {
+                q: "What is the best free meal planner app?",
+                a: "BestMealMate offers a generous free tier that includes family profiles, AI recipe suggestions, weekly meal planning, and smart grocery lists. Unlike many competitors, the free version has no ads and includes core features that others charge for."
+              },
+              {
+                q: "Is there a meal planning app that creates grocery lists automatically?",
+                a: "Yes! BestMealMate automatically generates grocery lists from your meal plan. It intelligently merges ingredients (2 onions from Recipe A + 1 from Recipe B = 3 onions), organizes items by store aisle, and excludes items already in your pantry."
+              },
+              {
+                q: "What is better than Mealime for family meal planning?",
+                a: "BestMealMate is better than Mealime for families because it supports multiple dietary profiles per household (Mealime only supports one), offers any serving size (not just 2/4/6), includes smart pantry tracking with expiration alerts, and provides AI-powered recipe suggestions that understand your whole family's needs."
+              },
+              {
+                q: "How can I reduce food waste with meal planning?",
+                a: "BestMealMate helps reduce food waste with its Smart Pantry feature. It tracks expiration dates and prioritizes ingredients that are about to expire in recipe suggestions. The AI Chef can create recipes using specific items you need to use up, and you can see exactly how much food and money you're saving."
+              },
+              {
+                q: "Is there a meal planning app for keto and regular diets together?",
+                a: "BestMealMate is designed exactly for this. You can have one family member on keto while others eat regular, vegetarian, or any other diet. The app suggests recipes that work for multiple diets or provides easy swaps, so the whole family can eat together without making separate meals."
+              },
+              {
+                q: "What meal planning app works with fitness trackers?",
+                a: "BestMealMate syncs with Apple Health, Fitbit, and Garmin to incorporate your activity data and calorie goals into meal planning. This feature is exclusive to BestMealMate — competitors like Mealime, Yummly, and Paprika don't offer wearable integration."
+              },
+            ].map((faq, i) => (
+              <div key={i} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-semibold text-gray-900 pr-4">{faq.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-gray-500 flex-shrink-0 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                </button>
+                {openFaq === i && (
+                  <div className="px-6 pb-5 text-gray-600 leading-relaxed">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-gray-600 mb-4">Still have questions?</p>
+            <Link href="/contact" className="inline-flex items-center gap-2 text-brand-600 font-semibold hover:text-brand-700">
+              Contact our team
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
