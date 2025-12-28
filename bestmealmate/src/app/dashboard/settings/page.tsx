@@ -18,16 +18,19 @@ import {
   Trash2,
   Check,
   ChevronRight,
-  Crown
+  Crown,
+  Loader2
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 
 export default function SettingsPage() {
   const [household, setHousehold] = useState({
+    id: 'demo-household-id', // In real app, get from auth context
     name: 'The Smith Family',
+    email: 'demo@example.com', // In real app, get from auth context
     timezone: 'America/New_York',
     preferred_store: 'Whole Foods',
-    subscription_tier: 'premium' as 'free' | 'premium' | 'family'
+    subscription_tier: 'free' as 'free' | 'premium' | 'family'
   })
 
   const [notifications, setNotifications] = useState({
@@ -39,6 +42,38 @@ export default function SettingsPage() {
   })
 
   const [theme, setTheme] = useState('system')
+  const [upgrading, setUpgrading] = useState<string | null>(null)
+
+  async function handleUpgrade(tier: 'premium' | 'family') {
+    setUpgrading(tier)
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          householdId: household.id,
+          tier: tier,
+          email: household.email,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.error) {
+        toast.error(data.error)
+        return
+      }
+
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      toast.error('Failed to start checkout. Please try again.')
+      console.error('Checkout error:', error)
+    } finally {
+      setUpgrading(null)
+    }
+  }
 
   function handleSave() {
     toast.success('Settings saved')
@@ -158,17 +193,56 @@ export default function SettingsPage() {
               </ul>
 
               {household.subscription_tier === 'free' ? (
-                <button className="w-full py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors">
-                  Upgrade to Premium
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => handleUpgrade('premium')}
+                    disabled={upgrading !== null}
+                    className="w-full py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {upgrading === 'premium' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Upgrade to Premium - $9.99/mo'
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleUpgrade('family')}
+                    disabled={upgrading !== null}
+                    className="w-full py-2 border border-brand-600 text-brand-600 rounded-lg font-medium hover:bg-brand-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {upgrading === 'family' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Upgrade to Family - $14.99/mo'
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-500 text-center">14-day free trial included</p>
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <button className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
                     Manage Subscription
                   </button>
                   {household.subscription_tier === 'premium' && (
-                    <button className="flex-1 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors">
-                      Upgrade to Family
+                    <button
+                      onClick={() => handleUpgrade('family')}
+                      disabled={upgrading !== null}
+                      className="flex-1 py-2 bg-brand-600 text-white rounded-lg font-medium hover:bg-brand-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {upgrading === 'family' ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        'Upgrade to Family'
+                      )}
                     </button>
                   )}
                 </div>
