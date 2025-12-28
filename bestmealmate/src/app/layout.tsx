@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/lib/auth-context'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
@@ -394,6 +395,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-white antialiased">
         <AuthProvider>
           <WebVitals />
+          <Analytics />
           {children}
           <PushNotificationPrompt />
           <Toaster
