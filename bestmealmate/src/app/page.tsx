@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import EmailCapture from '@/components/EmailCapture'
 import {
@@ -254,12 +255,10 @@ export default function HomePage() {
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-glow">
-                <ChefHat className="w-6 h-6 text-white" />
-              </div>
+            <Link href="/" className="flex items-center gap-2">
+              <Image src="/icon.svg" alt="BestMealMate" width={40} height={40} className="rounded-xl" />
               <span className="text-xl font-bold text-gray-900">BestMealMate</span>
-            </div>
+            </Link>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
@@ -1380,9 +1379,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center">
-                  <ChefHat className="w-6 h-6 text-white" />
-                </div>
+                <Image src="/icon.svg" alt="BestMealMate" width={40} height={40} className="rounded-xl" />
                 <span className="text-xl font-bold text-white">BestMealMate</span>
               </div>
               <p className="text-gray-400">
