@@ -43,6 +43,31 @@ export default function HomePage() {
   const [showSocialProof, setShowSocialProof] = useState(false)
   const [currentProof, setCurrentProof] = useState(0)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [showMealPlanModal, setShowMealPlanModal] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedMeal, setGeneratedMeal] = useState<{name: string, time: string, description: string, ingredients: string[]} | null>(null)
+
+  const mealSuggestions = [
+    { name: "Honey Garlic Chicken", time: "30 min", description: "Tender chicken thighs glazed with a sweet and savory honey garlic sauce, served with steamed broccoli.", ingredients: ["Chicken thighs", "Honey", "Garlic", "Soy sauce", "Broccoli"] },
+    { name: "Sheet Pan Salmon", time: "25 min", description: "Perfectly roasted salmon with lemon herb butter, surrounded by colorful roasted vegetables.", ingredients: ["Salmon fillets", "Lemon", "Butter", "Asparagus", "Cherry tomatoes"] },
+    { name: "One-Pot Pasta Primavera", time: "20 min", description: "Creamy pasta loaded with fresh seasonal vegetables in a light garlic parmesan sauce.", ingredients: ["Penne pasta", "Zucchini", "Bell peppers", "Parmesan", "Heavy cream"] },
+    { name: "Turkey Taco Bowls", time: "25 min", description: "Flavorful seasoned ground turkey over rice with all your favorite taco toppings.", ingredients: ["Ground turkey", "Taco seasoning", "Rice", "Black beans", "Avocado"] },
+    { name: "Teriyaki Stir Fry", time: "20 min", description: "Quick and healthy stir fry with crisp vegetables and your choice of protein in homemade teriyaki sauce.", ingredients: ["Chicken or tofu", "Broccoli", "Snap peas", "Carrots", "Teriyaki sauce"] }
+  ]
+
+  const generateMealPlan = async () => {
+    setShowMealPlanModal(true)
+    setIsGenerating(true)
+    setGeneratedMeal(null)
+
+    // Simulate API call with timeout
+    await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Pick a random meal
+    const randomMeal = mealSuggestions[Math.floor(Math.random() * mealSuggestions.length)]
+    setGeneratedMeal(randomMeal)
+    setIsGenerating(false)
+  }
 
   const socialProofNotifications = [
     { name: "Sarah from Texas", action: "just signed up", time: "2 minutes ago", emoji: "👩" },
@@ -312,13 +337,21 @@ export default function HomePage() {
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <button
-                  onClick={() => setShowDemoVideo(true)}
-                  className="btn-secondary text-lg px-8 py-4 flex items-center justify-center gap-2"
+                  onClick={generateMealPlan}
+                  className="btn-secondary text-lg px-8 py-4 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 hover:shadow-lg"
                 >
-                  <Play className="w-5 h-5" />
-                  Watch Demo
+                  <Sparkles className="w-5 h-5" />
+                  Generate My Meal Plan
                 </button>
               </div>
+
+              <button
+                onClick={() => setShowDemoVideo(true)}
+                className="mt-4 text-brand-600 font-medium flex items-center gap-2 justify-center lg:justify-start hover:text-brand-700 transition-colors animate-fade-in animate-delay-300"
+              >
+                <Play className="w-4 h-4" />
+                Watch 60-second demo
+              </button>
 
               <p className="mt-6 text-sm text-gray-500 flex items-center gap-4 justify-center lg:justify-start animate-fade-in animate-delay-300">
                 <span className="flex items-center gap-1">
@@ -724,7 +757,7 @@ export default function HomePage() {
                 diets: ["Keto", "Gluten-Free", "Dairy-Free"],
                 rating: 4.9,
                 reviews: 2847,
-                image: "🍣",
+                image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=300&fit=crop",
                 color: "from-orange-400 to-red-400"
               },
               {
@@ -734,7 +767,7 @@ export default function HomePage() {
                 diets: ["Low-Carb", "Dairy-Free", "Nut-Free"],
                 rating: 4.8,
                 reviews: 1923,
-                image: "🍗",
+                image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400&h=300&fit=crop",
                 color: "from-green-400 to-emerald-500"
               },
               {
@@ -744,7 +777,7 @@ export default function HomePage() {
                 diets: ["Vegetarian", "Nut-Free"],
                 rating: 4.9,
                 reviews: 3102,
-                image: "🥗",
+                image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop",
                 color: "from-blue-400 to-cyan-500"
               },
               {
@@ -754,13 +787,18 @@ export default function HomePage() {
                 diets: ["Keto", "Gluten-Free", "Whole30"],
                 rating: 4.7,
                 reviews: 2156,
-                image: "🌮",
+                image: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&h=300&fit=crop",
                 color: "from-yellow-400 to-orange-500"
               },
             ].map((recipe, i) => (
               <div key={i} className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-xl transition-all hover:-translate-y-1">
-                <div className={`h-32 bg-gradient-to-br ${recipe.color} flex items-center justify-center text-5xl`}>
-                  {recipe.image}
+                <div className="h-40 relative overflow-hidden">
+                  <img
+                    src={recipe.image}
+                    alt={recipe.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
+                  <div className={`absolute inset-0 bg-gradient-to-t ${recipe.color} opacity-20`} />
                 </div>
                 <div className="p-4">
                   <div className="flex items-center gap-1 mb-2">
@@ -917,6 +955,99 @@ export default function HomePage() {
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Food Gallery / Inspiration Section */}
+      <section className="py-20 lg:py-28 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-100 text-pink-700 text-sm font-medium mb-4">
+              <Camera className="w-4 h-4" />
+              Food Inspiration
+            </div>
+            <h2 className="section-title">Beautiful meals made by our community</h2>
+            <p className="section-subtitle">Real families cooking real food - every single day</p>
+          </div>
+
+          {/* Masonry-style Image Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Row 1 */}
+            <div className="col-span-2 row-span-2 relative group overflow-hidden rounded-2xl">
+              <img
+                src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&h=800&fit=crop"
+                alt="Family dinner"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 text-white">
+                <p className="font-bold text-lg">Family Roast Dinner</p>
+                <p className="text-sm opacity-80">Made by Sarah T.</p>
+              </div>
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop"
+                alt="Healthy salad"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=400&fit=crop"
+                alt="Fresh pasta"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1432139509613-5c4255815697?w=400&h=400&fit=crop"
+                alt="Grilled steak"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=400&fit=crop"
+                alt="Vegetable bowl"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            {/* Row 2 */}
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&h=400&fit=crop"
+                alt="Breakfast spread"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="relative group overflow-hidden rounded-2xl aspect-square">
+              <img
+                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop"
+                alt="Gourmet plate"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+              />
+            </div>
+            <div className="col-span-2 relative group overflow-hidden rounded-2xl aspect-video">
+              <img
+                src="https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=800&h=400&fit=crop"
+                alt="Table spread"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-4 left-4 text-white">
+                <p className="font-bold text-lg">Weekend Brunch</p>
+                <p className="text-sm opacity-80">Made by The Johnson Family</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-10">
+            <Link href="/onboarding" className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+              Start Creating Beautiful Meals
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>
@@ -1387,6 +1518,95 @@ export default function HomePage() {
                 allowFullScreen
                 className="w-full h-full"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Meal Plan Modal */}
+      {showMealPlanModal && (
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+          onClick={() => setShowMealPlanModal(false)}
+        >
+          <div
+            className="relative w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl">AI Meal Generator</h3>
+                    <p className="text-sm text-white/80">Personalized just for you</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowMealPlanModal(false)}
+                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {isGenerating ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-4 border-4 border-purple-200 border-t-purple-500 rounded-full animate-spin" />
+                  <p className="text-gray-600 font-medium">Generating your perfect meal...</p>
+                  <p className="text-sm text-gray-400 mt-2">Analyzing preferences & ingredients</p>
+                </div>
+              ) : generatedMeal ? (
+                <>
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5 mb-5 border border-purple-100">
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+                        🍽️
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-xl text-gray-900">{generatedMeal.name}</h4>
+                        <p className="text-sm text-purple-600 font-medium flex items-center gap-2 mt-1">
+                          <Clock className="w-4 h-4" />
+                          {generatedMeal.time}
+                        </p>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-gray-600">{generatedMeal.description}</p>
+                  </div>
+
+                  <div className="mb-5">
+                    <h5 className="font-semibold text-gray-900 mb-3">Ingredients Needed:</h5>
+                    <div className="flex flex-wrap gap-2">
+                      {generatedMeal.ingredients.map((ingredient, i) => (
+                        <span key={i} className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full text-sm">
+                          {ingredient}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Link
+                      href="/onboarding"
+                      className="flex-1 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold text-center hover:shadow-lg transition-all"
+                    >
+                      Start Planning Free
+                    </Link>
+                    <button
+                      onClick={generateMealPlan}
+                      className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                    </button>
+                  </div>
+                </>
+              ) : null}
             </div>
           </div>
         </div>

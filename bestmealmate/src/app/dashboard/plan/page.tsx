@@ -18,7 +18,8 @@ import {
   Trash2,
   Edit,
   Copy,
-  ShoppingCart
+  ShoppingCart,
+  X
 } from 'lucide-react'
 
 // Mock data for weekly meal plan
@@ -92,6 +93,35 @@ export default function MealPlanPage() {
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date())
   const [selectedDay, setSelectedDay] = useState<number>(0)
   const [showMealMenu, setShowMealMenu] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [showAISuggestion, setShowAISuggestion] = useState(false)
+  const [aiSuggestion, setAiSuggestion] = useState('')
+
+  const generateMealPlan = async () => {
+    setIsGenerating(true)
+    try {
+      const response = await fetch('/api/ai-chef', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Generate a healthy meal suggestion for my family',
+          action: 'generate_meal_plan'
+        })
+      })
+      const data = await response.json()
+      setAiSuggestion(data.suggestion || 'Try making Honey Garlic Chicken with roasted vegetables - quick, healthy, and family-friendly!')
+      setShowAISuggestion(true)
+    } catch {
+      setAiSuggestion('How about Teriyaki Salmon with rice and steamed broccoli? Takes only 25 minutes and is packed with omega-3!')
+      setShowAISuggestion(true)
+    }
+    setIsGenerating(false)
+  }
+
+  const addToGroceryList = () => {
+    // Navigate to groceries with items
+    window.location.href = '/dashboard/groceries'
+  }
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
@@ -131,12 +161,23 @@ export default function MealPlanPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors">
+              <button
+                onClick={addToGroceryList}
+                className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
+              >
                 <ShoppingCart className="w-5 h-5 text-gray-600" />
               </button>
-              <button className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-medium hover:shadow-glow transition-all">
-                <Sparkles className="w-5 h-5" />
-                AI Suggestions
+              <button
+                onClick={generateMealPlan}
+                disabled={isGenerating}
+                className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-medium hover:shadow-glow transition-all disabled:opacity-50"
+              >
+                {isGenerating ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Sparkles className="w-5 h-5" />
+                )}
+                {isGenerating ? 'Generating...' : 'AI Suggestions'}
               </button>
             </div>
           </div>
@@ -346,13 +387,24 @@ export default function MealPlanPage() {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-100">
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-semibold hover:shadow-glow transition-all">
+            <button
+              onClick={addToGroceryList}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-semibold hover:shadow-glow transition-all"
+            >
               <ShoppingCart className="w-5 h-5" />
               Add to Grocery List
             </button>
-            <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
-              <Sparkles className="w-5 h-5" />
-              Get AI Suggestions
+            <button
+              onClick={generateMealPlan}
+              disabled={isGenerating}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Sparkles className="w-5 h-5" />
+              )}
+              {isGenerating ? 'Generating...' : 'Get AI Suggestions'}
             </button>
           </div>
         </div>
@@ -380,6 +432,60 @@ export default function MealPlanPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Suggestion Modal */}
+      {showAISuggestion && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-scale-in">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-lg">AI Meal Suggestion</h3>
+                    <p className="text-sm text-white/80">Personalized for your family</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAISuggestion(false)}
+                  className="p-2 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-5 mb-5 border border-purple-100">
+                <p className="text-gray-700 leading-relaxed">{aiSuggestion}</p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => setShowAISuggestion(false)}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Add to Plan
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAISuggestion(false)
+                    generateMealPlan()
+                  }}
+                  className="px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                >
+                  <Shuffle className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
