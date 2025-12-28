@@ -883,3 +883,248 @@ export async function clearPurchasedItems(listId: string) {
     throw error
   }
 }
+
+// ============================================
+// WEARABLE CONNECTION HELPERS
+// ============================================
+
+export interface WearableConnection {
+  id?: string
+  user_id: string
+  provider: string
+  access_token?: string
+  refresh_token?: string
+  is_active: boolean
+  last_sync_at?: string
+}
+
+export interface HealthMetric {
+  id?: string
+  user_id: string
+  connection_id: string
+  metric_type: 'steps' | 'calories_burned' | 'heart_rate' | 'sleep' | 'active_minutes' | 'weight'
+  value: number
+  unit: string
+  recorded_at: string
+  source: string
+}
+
+/**
+ * Get wearable connections for a user
+ */
+export async function getWearableConnections(userId: string): Promise<WearableConnection[]> {
+  const { data, error } = await supabaseUntyped
+    .from('wearable_connections')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching wearable connections:', error)
+  }
+
+  return (data || []) as unknown as WearableConnection[]
+}
+
+/**
+ * Save wearable connection
+ */
+export async function saveWearableConnection(connection: WearableConnection) {
+  const { data, error } = await supabaseUntyped
+    .from('wearable_connections')
+    .upsert({
+      user_id: connection.user_id,
+      provider: connection.provider,
+      access_token: connection.access_token,
+      refresh_token: connection.refresh_token,
+      is_active: connection.is_active,
+      last_sync_at: connection.last_sync_at,
+    }, {
+      onConflict: 'user_id,provider'
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving wearable connection:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Save health metrics from wearables
+ */
+export async function saveHealthMetrics(metrics: HealthMetric[]) {
+  if (metrics.length === 0) return
+
+  const { error } = await supabaseUntyped
+    .from('health_metrics')
+    .insert(metrics.map(m => ({
+      user_id: m.user_id,
+      connection_id: m.connection_id,
+      metric_type: m.metric_type,
+      value: m.value,
+      unit: m.unit,
+      recorded_at: m.recorded_at,
+      source: m.source,
+    })))
+
+  if (error) {
+    console.error('Error saving health metrics:', error)
+    throw error
+  }
+}
+
+/**
+ * Get health metrics for a user
+ */
+export async function getHealthMetrics(userId: string, days: number = 7): Promise<HealthMetric[]> {
+  const startDate = new Date()
+  startDate.setDate(startDate.getDate() - days)
+
+  const { data, error } = await supabaseUntyped
+    .from('health_metrics')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('recorded_at', startDate.toISOString())
+    .order('recorded_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching health metrics:', error)
+  }
+
+  return (data || []) as unknown as HealthMetric[]
+}
+
+// ============================================
+// MEAL PLAN HELPERS
+// ============================================
+
+export interface PlannedMeal {
+  id?: string
+  meal_plan_id: string
+  meal_date: string
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+  recipe_id?: string | null
+  servings?: number
+  status?: 'planned' | 'cooked' | 'skipped'
+  notes?: string
+}
+
+export interface MealPlan {
+  id?: string
+  household_id: string
+  week_start_date: string
+  planned_meals?: PlannedMeal[]
+  created_at?: string
+  updated_at?: string
+}
+
+/**
+ * Get current week's meal plan for a household
+ */
+export async function getActiveMealPlan(householdId: string): Promise<MealPlan | null> {
+  // Get the start of the current week (Monday)
+  const today = new Date()
+  const dayOfWeek = today.getDay()
+  const startOfWeek = new Date(today)
+  startOfWeek.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+  const weekStart = startOfWeek.toISOString().split('T')[0]
+
+  const { data, error } = await supabase
+    .from('meal_plans')
+    .select('*, planned_meals(*)')
+    .eq('household_id', householdId)
+    .eq('week_start_date', weekStart)
+    .single()
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching active meal plan:', error)
+  }
+
+  return data as unknown as MealPlan | null
+}
+
+/**
+ * Create or update meal plan
+ */
+export async function saveMealPlan(plan: MealPlan): Promise<MealPlan> {
+  const { data, error } = await supabase
+    .from('meal_plans')
+    .upsert({
+      id: plan.id,
+      household_id: plan.household_id,
+      week_start_date: plan.week_start_date,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving meal plan:', error)
+    throw error
+  }
+
+  return data as unknown as MealPlan
+}
+
+/**
+ * Add or update planned meal
+ */
+export async function savePlannedMeal(meal: PlannedMeal) {
+  const { data, error } = await supabase
+    .from('planned_meals')
+    .upsert({
+      id: meal.id,
+      meal_plan_id: meal.meal_plan_id,
+      meal_date: meal.meal_date,
+      meal_type: meal.meal_type,
+      recipe_id: meal.recipe_id,
+      servings: meal.servings || 4,
+      status: meal.status || 'planned',
+      notes: meal.notes,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error saving planned meal:', error)
+    throw error
+  }
+
+  return data
+}
+
+/**
+ * Delete a planned meal
+ */
+export async function deletePlannedMeal(mealId: string) {
+  const { error } = await supabase
+    .from('planned_meals')
+    .delete()
+    .eq('id', mealId)
+
+  if (error) {
+    console.error('Error deleting planned meal:', error)
+    throw error
+  }
+}
+
+/**
+ * Get meal plan history for a household
+ */
+export async function getMealPlanHistory(householdId: string, limit: number = 10): Promise<MealPlan[]> {
+  const { data, error } = await supabase
+    .from('meal_plans')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) {
+    console.error('Error fetching meal plan history:', error)
+  }
+
+  return (data || []) as unknown as MealPlan[]
+}

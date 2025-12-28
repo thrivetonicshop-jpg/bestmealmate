@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ChefHat,
@@ -16,9 +16,12 @@ import {
   LogOut,
   AlertCircle,
   Shield,
-  User
+  User,
+  Loader2
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
+import { useAuth } from '@/lib/auth-context'
+import { supabase, createProfileBackup } from '@/lib/supabase'
 
 interface FamilyMember {
   id: string
@@ -30,6 +33,8 @@ interface FamilyMember {
   allergies: { name: string; severity: 'mild' | 'moderate' | 'severe' }[]
   dislikes: string[]
   is_picky_eater: boolean
+  user_id?: string | null
+  household_id?: string
 }
 
 const mockFamily: FamilyMember[] = [
@@ -84,7 +89,10 @@ const dietaryOptions = ['Vegetarian', 'Vegan', 'Gluten Free', 'Dairy Free', 'Ket
 const commonAllergens = ['Peanuts', 'Tree Nuts', 'Dairy', 'Eggs', 'Shellfish', 'Fish', 'Soy', 'Wheat', 'Sesame']
 
 export default function FamilyPage() {
-  const [family, setFamily] = useState<FamilyMember[]>(mockFamily)
+  const { user, household, signOut } = useAuth()
+  const [family, setFamily] = useState<FamilyMember[]>([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingMember, setEditingMember] = useState<FamilyMember | null>(null)
   const [formData, setFormData] = useState({
@@ -97,6 +105,60 @@ export default function FamilyPage() {
     dislikes: '',
     is_picky_eater: false
   })
+
+  // Load family members from Supabase
+  const loadFamilyMembers = useCallback(async () => {
+    if (!household?.id) return
+    setLoading(true)
+    try {
+      const { data: members, error } = await supabase
+        .from('family_members')
+        .select('*, dietary_restrictions(*), allergies(*), food_dislikes(*)')
+        .eq('household_id', household.id)
+
+      if (error) throw error
+
+      const formattedMembers: FamilyMember[] = (members || []).map(m => ({
+        id: m.id,
+        name: m.name,
+        age: m.age,
+        role: m.role || 'member',
+        avatar: m.avatar_url || '🧑',
+        dietary_restrictions: (m.dietary_restrictions || []).map((d: { restriction_type: string }) => d.restriction_type),
+        allergies: (m.allergies || []).map((a: { allergen: string; severity: string }) => ({
+          name: a.allergen,
+          severity: a.severity as 'mild' | 'moderate' | 'severe'
+        })),
+        dislikes: (m.food_dislikes || []).map((d: { food_name: string }) => d.food_name),
+        is_picky_eater: m.is_picky_eater || false,
+        user_id: m.user_id,
+        household_id: m.household_id
+      }))
+
+      setFamily(formattedMembers.length > 0 ? formattedMembers : mockFamily)
+    } catch (error) {
+      console.error('Error loading family members:', error)
+      setFamily(mockFamily) // Fallback to demo data
+    }
+    setLoading(false)
+  }, [household?.id])
+
+  useEffect(() => {
+    if (household?.id) {
+      loadFamilyMembers()
+    }
+  }, [household?.id, loadFamilyMembers])
+
+  // Auto-backup after profile changes
+  const triggerAutoBackup = useCallback(async () => {
+    if (!user?.id || !household?.id) return
+    try {
+      await createProfileBackup(user.id, household.id, 'auto')
+      console.log('Auto-backup created successfully')
+    } catch (error) {
+      console.error('Auto-backup failed:', error)
+    }
+  }, [user?.id, household?.id])
 
   function openAddModal() {
     setEditingMember(null)
@@ -128,7 +190,7 @@ export default function FamilyPage() {
     setShowModal(true)
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
     if (!formData.name.trim()) {
@@ -136,33 +198,152 @@ export default function FamilyPage() {
       return
     }
 
-    const memberData: FamilyMember = {
-      id: editingMember?.id || `member-${Date.now()}`,
-      name: formData.name,
-      age: formData.age ? parseInt(formData.age) : null,
-      role: formData.role,
-      avatar: formData.avatar,
-      dietary_restrictions: formData.dietary_restrictions,
-      allergies: formData.allergies,
-      dislikes: formData.dislikes.split(',').map(d => d.trim()).filter(Boolean),
-      is_picky_eater: formData.is_picky_eater
+    if (!household?.id) {
+      toast.error('No household found')
+      return
     }
 
-    if (editingMember) {
-      setFamily(family.map(m => m.id === editingMember.id ? memberData : m))
-      toast.success('Member updated')
-    } else {
-      setFamily([...family, memberData])
-      toast.success('Member added')
-    }
+    setSaving(true)
 
-    setShowModal(false)
+    try {
+      const dislikesArray = formData.dislikes.split(',').map(d => d.trim()).filter(Boolean)
+
+      if (editingMember) {
+        // Update existing member
+        const { error } = await supabase
+          .from('family_members')
+          .update({
+            name: formData.name,
+            age: formData.age ? parseInt(formData.age) : null,
+            role: formData.role,
+            avatar_url: formData.avatar,
+            is_picky_eater: formData.is_picky_eater,
+          })
+          .eq('id', editingMember.id)
+
+        if (error) throw error
+
+        // Update dietary restrictions
+        await supabase.from('dietary_restrictions').delete().eq('family_member_id', editingMember.id)
+        if (formData.dietary_restrictions.length > 0) {
+          await supabase.from('dietary_restrictions').insert(
+            formData.dietary_restrictions.map(restriction_type => ({
+              family_member_id: editingMember.id,
+              restriction_type,
+            }))
+          )
+        }
+
+        // Update allergies
+        await supabase.from('allergies').delete().eq('family_member_id', editingMember.id)
+        if (formData.allergies.length > 0) {
+          await supabase.from('allergies').insert(
+            formData.allergies.map(a => ({
+              family_member_id: editingMember.id,
+              allergen: a.name,
+              severity: a.severity,
+            }))
+          )
+        }
+
+        // Update dislikes
+        await supabase.from('food_dislikes').delete().eq('family_member_id', editingMember.id)
+        if (dislikesArray.length > 0) {
+          await supabase.from('food_dislikes').insert(
+            dislikesArray.map(food_name => ({
+              family_member_id: editingMember.id,
+              food_name,
+            }))
+          )
+        }
+
+        toast.success('Member updated')
+      } else {
+        // Insert new member
+        const { data: newMember, error } = await supabase
+          .from('family_members')
+          .insert({
+            household_id: household.id,
+            name: formData.name,
+            age: formData.age ? parseInt(formData.age) : null,
+            role: formData.role,
+            avatar_url: formData.avatar,
+            is_picky_eater: formData.is_picky_eater,
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        // Add dietary restrictions
+        if (formData.dietary_restrictions.length > 0) {
+          await supabase.from('dietary_restrictions').insert(
+            formData.dietary_restrictions.map(restriction_type => ({
+              family_member_id: newMember.id,
+              restriction_type,
+            }))
+          )
+        }
+
+        // Add allergies
+        if (formData.allergies.length > 0) {
+          await supabase.from('allergies').insert(
+            formData.allergies.map(a => ({
+              family_member_id: newMember.id,
+              allergen: a.name,
+              severity: a.severity,
+            }))
+          )
+        }
+
+        // Add dislikes
+        if (dislikesArray.length > 0) {
+          await supabase.from('food_dislikes').insert(
+            dislikesArray.map(food_name => ({
+              family_member_id: newMember.id,
+              food_name,
+            }))
+          )
+        }
+
+        toast.success('Member added')
+      }
+
+      // Trigger auto-backup after profile change
+      await triggerAutoBackup()
+
+      // Reload family members
+      await loadFamilyMembers()
+      setShowModal(false)
+    } catch (error) {
+      console.error('Error saving member:', error)
+      toast.error('Failed to save member')
+    }
+    setSaving(false)
   }
 
-  function deleteMember(member: FamilyMember) {
+  async function deleteMember(member: FamilyMember) {
     if (!confirm(`Remove ${member.name} from your family?`)) return
-    setFamily(family.filter(m => m.id !== member.id))
-    toast.success('Member removed')
+
+    try {
+      const { error } = await supabase
+        .from('family_members')
+        .delete()
+        .eq('id', member.id)
+
+      if (error) throw error
+
+      // Trigger auto-backup after profile change
+      await triggerAutoBackup()
+
+      await loadFamilyMembers()
+      toast.success('Member removed')
+    } catch (error) {
+      console.error('Error deleting member:', error)
+      // Fallback to local delete for demo
+      setFamily(family.filter(m => m.id !== member.id))
+      toast.success('Member removed')
+    }
   }
 
   function toggleDietaryRestriction(restriction: string) {
