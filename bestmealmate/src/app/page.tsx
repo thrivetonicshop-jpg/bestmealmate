@@ -652,6 +652,81 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Honest Pros & Cons */}
+          <div className="mt-12 grid md:grid-cols-2 gap-6">
+            {/* Pros */}
+            <div className="bg-green-900/20 rounded-2xl p-6 border border-green-500/30">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-green-400">Pros</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Handles multiple dietary restrictions simultaneously</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>AI-powered food scanner saves hours of manual entry</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Smart grocery lists merge ingredients automatically</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Syncs with health wearables for calorie goals</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>No ads, even in the free tier</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <Check className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
+                  <span>Cancel anytime with no hidden fees</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Cons */}
+            <div className="bg-orange-900/20 rounded-2xl p-6 border border-orange-500/30">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center">
+                  <XCircle className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-orange-400">Cons</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Newer app with smaller recipe database than established competitors</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Premium features require subscription ($9.99-$14.99/mo)</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>AI suggestions depend on internet connection</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Limited international recipe options currently</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>No desktop app (web and mobile only)</span>
+                </li>
+                <li className="flex items-start gap-2 text-gray-300">
+                  <XCircle className="w-4 h-4 text-orange-400 mt-1 flex-shrink-0" />
+                  <span>Grocery store integration coming soon (not yet available)</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
           {/* Switch CTA */}
           <div className="mt-12 text-center">
             <p className="text-gray-400 mb-6">Ready to try something that actually works for your whole family?</p>
