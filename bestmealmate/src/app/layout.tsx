@@ -120,7 +120,7 @@ export const metadata: Metadata = {
     description: 'Finally, a meal planning app that handles multiple diets, allergies, and picky eaters. AI-powered suggestions, smart grocery lists, and zero food waste.',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://www.bestmealmate.com/og-image.svg',
         width: 1200,
         height: 630,
         alt: 'BestMealMate - Family Meal Planning App',
@@ -133,7 +133,7 @@ export const metadata: Metadata = {
     description: 'The only app that plans meals for your whole family\'s different diets. Try free!',
     site: '@bestmealmate',
     creator: '@bestmealmate',
-    images: ['/og-image.png'],
+    images: ['https://www.bestmealmate.com/og-image.svg'],
   },
   alternates: {
     canonical: 'https://www.bestmealmate.com',
@@ -185,7 +185,7 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: 'BestMealMate',
   url: 'https://www.bestmealmate.com',
-  logo: 'https://www.bestmealmate.com/logo.png',
+  logo: 'https://www.bestmealmate.com/logo.svg',
   sameAs: [
     'https://x.com/bestmealmate',
     'https://instagram.com/bestmealmate',

@@ -16,6 +16,7 @@ import {
   Snowflake
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { uploadFoodScanImage } from '@/lib/supabase'
 
 interface DetectedItem {
   name: string
@@ -39,11 +40,12 @@ interface NutritionSummary {
 }
 
 interface FoodScannerProps {
-  onItemsDetected: (items: DetectedItem[]) => void
+  onItemsDetected: (items: DetectedItem[], imageUrl?: string) => void
   onClose: () => void
+  householdId?: string
 }
 
-export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerProps) {
+export default function FoodScanner({ onItemsDetected, onClose, householdId }: FoodScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -58,6 +60,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
   const [scanLocation, setScanLocation] = useState<'fridge' | 'freezer' | 'pantry'>('fridge')
   const [nutritionSummary, setNutritionSummary] = useState<NutritionSummary | null>(null)
   const [scanMode, setScanMode] = useState<'camera' | 'barcode'>('camera')
+  const [savedImageUrl, setSavedImageUrl] = useState<string | null>(null)
 
   // Start camera
   const startCamera = useCallback(async () => {
@@ -134,7 +137,20 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
   // Analyze image with AI
   const analyzeImage = async (imageData: string) => {
     setIsAnalyzing(true)
+    let imageUrl: string | undefined
+
     try {
+      // Save image to Supabase storage if householdId is provided
+      if (householdId) {
+        try {
+          imageUrl = await uploadFoodScanImage(householdId, imageData)
+          setSavedImageUrl(imageUrl)
+        } catch (storageError) {
+          console.warn('Could not save image to storage:', storageError)
+          // Continue with analysis even if storage fails
+        }
+      }
+
       const response = await fetch('/api/scan-food', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -201,7 +217,7 @@ export default function FoodScanner({ onItemsDetected, onClose }: FoodScannerPro
   // Confirm selected items
   const confirmItems = () => {
     const selected = detectedItems.filter((_, i) => selectedItems.has(i))
-    onItemsDetected(selected)
+    onItemsDetected(selected, savedImageUrl || undefined)
     toast.success(`Added ${selected.length} items to your pantry!`)
     onClose()
   }

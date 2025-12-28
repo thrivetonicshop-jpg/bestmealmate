@@ -566,3 +566,104 @@ CREATE POLICY "Users can manage own health summaries" ON daily_health_summaries
 -- Triggers for updated_at
 CREATE TRIGGER update_wearable_connections_updated_at BEFORE UPDATE ON wearable_connections FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 CREATE TRIGGER update_daily_health_summaries_updated_at BEFORE UPDATE ON daily_health_summaries FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================
+-- SUPABASE STORAGE BUCKETS
+-- ============================================
+-- Run these in the Supabase Dashboard > Storage
+
+-- Create storage buckets (run in SQL Editor)
+INSERT INTO storage.buckets (id, name, public) VALUES ('food-scans', 'food-scans', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('avatars', 'avatars', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('recipes', 'recipes', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('meal-plans', 'meal-plans', true);
+
+-- Storage policies for food-scans bucket
+CREATE POLICY "Users can upload food scans" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'food-scans' AND
+    auth.uid() IS NOT NULL
+  );
+
+CREATE POLICY "Users can view food scans" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'food-scans'
+  );
+
+CREATE POLICY "Users can delete own food scans" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'food-scans' AND
+    auth.uid() IS NOT NULL
+  );
+
+-- Storage policies for avatars bucket
+CREATE POLICY "Users can upload avatars" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'avatars' AND
+    auth.uid() IS NOT NULL
+  );
+
+CREATE POLICY "Anyone can view avatars" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'avatars'
+  );
+
+CREATE POLICY "Users can update own avatars" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'avatars' AND
+    auth.uid() IS NOT NULL
+  );
+
+CREATE POLICY "Users can delete own avatars" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'avatars' AND
+    auth.uid() IS NOT NULL
+  );
+
+-- Storage policies for recipes bucket
+CREATE POLICY "Users can upload recipe images" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'recipes' AND
+    auth.uid() IS NOT NULL
+  );
+
+CREATE POLICY "Anyone can view recipe images" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'recipes'
+  );
+
+CREATE POLICY "Users can update recipe images" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'recipes' AND
+    auth.uid() IS NOT NULL
+  );
+
+CREATE POLICY "Users can delete recipe images" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'recipes' AND
+    auth.uid() IS NOT NULL
+  );
+
+-- Storage policies for meal-plans bucket
+CREATE POLICY "Users can upload meal plan images" ON storage.objects
+  FOR INSERT WITH CHECK (
+    bucket_id = 'meal-plans' AND
+    auth.uid() IS NOT NULL
+  );
+
+CREATE POLICY "Anyone can view meal plan images" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'meal-plans'
+  );
+
+CREATE POLICY "Users can update meal plan images" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'meal-plans' AND
+    auth.uid() IS NOT NULL
+  );
+
+CREATE POLICY "Users can delete meal plan images" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'meal-plans' AND
+    auth.uid() IS NOT NULL
+  );
