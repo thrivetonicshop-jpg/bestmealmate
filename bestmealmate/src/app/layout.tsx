@@ -398,13 +398,13 @@ export default function RootLayout({
             gtag('config', 'AW-17838684120');
           `}
         </Script>
-        {/* Google AdSense */}
+        {/* Google AdSense - Required for crawler recognition */}
         <meta name="google-adsense-account" content="ca-pub-3073911588578821" />
-        <Script
+        <script
+          async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3073911588578821"
-          strategy="afterInteractive"
           crossOrigin="anonymous"
-        />
+        ></script>
       </head>
       <body className="min-h-screen bg-white antialiased">
         <I18nProvider>
