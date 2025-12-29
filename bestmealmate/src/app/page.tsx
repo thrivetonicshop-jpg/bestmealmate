@@ -1530,16 +1530,22 @@ export default function HomePage() {
             </div>
 
             <div>
-              <h4 className="font-semibold text-white mb-4">Legal</h4>
+              <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2">
+                <li>
+                  <Link href="/help" className="text-gray-400 hover:text-white transition-colors">Help Center</Link>
+                </li>
+                <li>
+                  <Link href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link>
+                </li>
                 <li>
                   <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
                 </li>
                 <li>
                   <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">Terms of Service</Link>
-                </li>
-                <li>
-                  <Link href="/cookies" className="text-gray-400 hover:text-white transition-colors">Cookie Policy</Link>
                 </li>
               </ul>
             </div>
