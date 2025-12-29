@@ -21,19 +21,19 @@ export default function NewsletterSignup({ variant = 'card', className = '' }: N
 
     setLoading(true)
     try {
-      const response = await fetch('/api/newsletter', {
+      const response = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim(),
-          firstName: firstName.trim() || undefined,
-          tags: ['website-signup', variant]
+          name: firstName.trim() || undefined,
+          source: `website-${variant}`
         })
       })
 
       const data = await response.json()
 
-      if (data.success) {
+      if (response.ok) {
         setSubscribed(true)
         toast.success(data.message || 'Successfully subscribed!')
         setEmail('')
