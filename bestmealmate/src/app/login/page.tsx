@@ -1,18 +1,35 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChefHat, Mail, Lock, ArrowRight, Sparkles, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { supabase } from '@/lib/supabase'
 
+const REMEMBER_EMAIL_KEY = 'bestmealmate_remember_email'
+const REMEMBER_ME_KEY = 'bestmealmate_remember_me'
+
 export default function LoginPage() {
   const router = useRouter()
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Load remembered email on mount
+  useEffect(() => {
+    const savedRememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true'
+    setRememberMe(savedRememberMe)
+
+    if (savedRememberMe) {
+      const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY)
+      if (savedEmail) {
+        setEmail(savedEmail)
+      }
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,6 +52,12 @@ export default function LoginPage() {
           password,
         })
         if (error) throw error
+
+        // Save email if Remember Me is checked
+        if (rememberMe) {
+          localStorage.setItem(REMEMBER_EMAIL_KEY, email)
+        }
+
         toast.success('Welcome back!')
         router.push('/dashboard')
       }
@@ -127,7 +150,18 @@ export default function LoginPage() {
               {!isSignUp && (
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => {
+                        setRememberMe(e.target.checked)
+                        localStorage.setItem(REMEMBER_ME_KEY, e.target.checked.toString())
+                        if (!e.target.checked) {
+                          localStorage.removeItem(REMEMBER_EMAIL_KEY)
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                    />
                     <span className="text-sm text-gray-600">Remember me</span>
                   </label>
                   <Link href="/forgot-password" className="text-sm text-brand-600 font-medium hover:text-brand-700">
