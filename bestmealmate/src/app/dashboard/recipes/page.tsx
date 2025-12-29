@@ -1884,21 +1884,35 @@ export default function RecipesPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [showImporter, setShowImporter] = useState(false)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function handleRecipeImported(importedRecipe: any) {
+  interface ImportedRecipeData {
+    id: string
+    name: string
+    description: string
+    cuisine?: string
+    meal_type?: string
+    prep_time?: number
+    cook_time?: number
+    difficulty?: string
+    servings?: number
+    image_url?: string
+    dietary?: string[]
+    calories?: number
+  }
+
+  function handleRecipeImported(importedRecipe: ImportedRecipeData) {
     const newRecipe: Recipe = {
       id: importedRecipe.id,
       name: importedRecipe.name,
       description: importedRecipe.description,
       cuisine: importedRecipe.cuisine || 'International',
-      meal_type: importedRecipe.meal_type || 'dinner',
+      meal_type: (importedRecipe.meal_type || 'dinner') as Recipe['meal_type'],
       prep_time_minutes: importedRecipe.prep_time || 15,
       cook_time_minutes: importedRecipe.cook_time || 30,
       difficulty: (importedRecipe.difficulty?.toLowerCase() || 'medium') as 'easy' | 'medium' | 'hard',
       servings: importedRecipe.servings || 4,
       image_url: importedRecipe.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
       is_kid_friendly: importedRecipe.dietary?.includes('kid-friendly') || false,
-      is_quick_meal: (importedRecipe.prep_time + importedRecipe.cook_time) <= 30,
+      is_quick_meal: ((importedRecipe.prep_time || 15) + (importedRecipe.cook_time || 30)) <= 30,
       tags: importedRecipe.dietary || [],
       rating: 0,
       is_favorite: false,

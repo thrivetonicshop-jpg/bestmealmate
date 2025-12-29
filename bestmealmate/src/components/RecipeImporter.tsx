@@ -150,6 +150,7 @@ export default function RecipeImporter({ onRecipeImported, onClose }: RecipeImpo
 
               <div className="border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
                 {importedRecipe.image_url && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={importedRecipe.image_url}
                     alt={importedRecipe.name}
