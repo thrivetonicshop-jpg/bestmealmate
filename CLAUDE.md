@@ -116,3 +116,50 @@ Edit `src/lib/auth-context.tsx` and `src/middleware.ts`.
 Use Stripe test mode with `sk_test_` keys. Test cards:
 - Success: 4242 4242 4242 4242
 - Decline: 4000 0000 0000 0002
+
+---
+
+## MANDATORY: User Preferences & Instructions
+
+### ALWAYS USE PLAYWRIGHT
+- **ALWAYS** use Playwright for testing, verification, and site checks
+- Run `npx playwright test` for any site verification
+- Test against production: `PLAYWRIGHT_BASE_URL=https://www.bestmealmate.com npx playwright test`
+- E2E tests are in `bestmealmate/e2e/` directory
+- Config: `bestmealmate/playwright.config.ts`
+
+### Quick Playwright Commands
+```bash
+# Test localhost (start dev server first with npm run dev)
+cd bestmealmate
+PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test --project=chromium
+
+# Test production site
+PLAYWRIGHT_BASE_URL=https://www.bestmealmate.com npx playwright test --project=chromium
+
+# Test specific file
+npx playwright test e2e/landing-page.spec.ts --project=chromium
+
+# Run with visible browser
+npx playwright test --headed --project=chromium
+
+# Debug mode
+npx playwright test --debug --project=chromium
+
+# List all tests
+npx playwright test --list
+```
+
+### User Prompting Style
+- User gives short, direct commands: "check it", "go", "try it", "do it"
+- Don't ask for clarification on obvious tasks - just execute
+- When user says "check" or "go" - verify site is working using Playwright
+- When user says "fix it" - implement the solution immediately
+- User expects fast action, minimal explanation
+- Always read and follow CLAUDE.md instructions
+
+### Google Ads & AdSense
+- Publisher ID: `ca-pub-3073911588578821`
+- Ads Tag ID: `AW-17838684120`
+- ads.txt location: `public/ads.txt`
+- All Google tracking code is in `src/app/layout.tsx`
