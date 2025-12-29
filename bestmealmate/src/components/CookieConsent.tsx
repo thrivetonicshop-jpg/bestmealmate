@@ -251,10 +251,3 @@ export default function CookieConsent() {
     </>
   )
 }
-
-// Type declaration for gtag
-declare global {
-  interface Window {
-    gtag?: (command: string, action: string, params: Record<string, string>) => void
-  }
-}
