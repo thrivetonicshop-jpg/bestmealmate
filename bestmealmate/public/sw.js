@@ -3,15 +3,17 @@
  * Enhanced PWA support with offline capabilities
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `bestmealmate-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bestmealmate-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `bestmealmate-api-${CACHE_VERSION}`;
+const RECIPE_CACHE = `bestmealmate-recipes-${CACHE_VERSION}`;
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
   '/',
   '/login',
+  '/dashboard/recipes',
   '/manifest.json',
   '/icon.svg',
   '/offline.html'
@@ -20,8 +22,12 @@ const STATIC_ASSETS = [
 // API routes to cache with network-first strategy
 const API_ROUTES = [
   '/api/brain',
-  '/api/ai-chef'
+  '/api/ai-chef',
+  '/api/recipes'
 ];
+
+// Maximum recipes to cache offline (to prevent excessive storage)
+const MAX_CACHED_RECIPES = 500;
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -81,6 +87,12 @@ self.addEventListener('fetch', (event) => {
 
   // Skip chrome-extension and other non-http(s) requests
   if (!url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Recipe API - special handling for offline viewing
+  if (url.pathname.startsWith('/api/recipes')) {
+    event.respondWith(handleRecipeRequest(request));
     return;
   }
 
@@ -311,4 +323,124 @@ async function syncMealData() {
   console.log('🔄 Syncing meal data...');
 }
 
-console.log('🚀 BestMealMate Service Worker loaded');
+// Recipe caching for offline viewing
+async function handleRecipeRequest(request) {
+  const url = new URL(request.url);
+  const cache = await caches.open(RECIPE_CACHE);
+
+  try {
+    const response = await fetch(request);
+
+    if (response.ok) {
+      // Clone the response for caching
+      const responseClone = response.clone();
+
+      // Cache individual recipe requests
+      if (url.searchParams.has('id')) {
+        await cache.put(request, responseClone);
+      }
+
+      // Cache paginated results (limit to first few pages)
+      const page = parseInt(url.searchParams.get('page') || '0');
+      if (page < 10) {
+        await cache.put(request, responseClone);
+      }
+
+      // Cleanup old cached recipes
+      await cleanupRecipeCache();
+    }
+
+    return response;
+  } catch (error) {
+    // Offline - try to serve from cache
+    const cached = await cache.match(request);
+
+    if (cached) {
+      console.log('📖 Serving recipe from cache');
+      return cached;
+    }
+
+    // Check if we have any cached recipes to return
+    const keys = await cache.keys();
+    if (keys.length > 0 && !url.searchParams.has('id')) {
+      // Return first cached page of recipes
+      const firstPage = await cache.match(keys[0]);
+      if (firstPage) {
+        return firstPage;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      error: 'Offline - recipes not cached',
+      offline: true,
+      recipes: []
+    }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+// Cleanup old cached recipes to prevent storage bloat
+async function cleanupRecipeCache() {
+  const cache = await caches.open(RECIPE_CACHE);
+  const keys = await cache.keys();
+
+  if (keys.length > MAX_CACHED_RECIPES) {
+    // Delete oldest entries (first in list)
+    const toDelete = keys.slice(0, keys.length - MAX_CACHED_RECIPES);
+    for (const key of toDelete) {
+      await cache.delete(key);
+    }
+    console.log(`🧹 Cleaned up ${toDelete.length} old recipes from cache`);
+  }
+}
+
+// Save recipe for offline viewing
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CACHE_RECIPE') {
+    const { recipeId, recipeData } = event.data;
+    cacheRecipeForOffline(recipeId, recipeData);
+  }
+
+  if (event.data && event.data.type === 'GET_CACHED_RECIPES') {
+    getCachedRecipes().then(recipes => {
+      event.ports[0].postMessage({ recipes });
+    });
+  }
+});
+
+async function cacheRecipeForOffline(recipeId, recipeData) {
+  const cache = await caches.open(RECIPE_CACHE);
+  const response = new Response(JSON.stringify({ recipe: recipeData }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  await cache.put(`/api/recipes?id=${recipeId}`, response);
+  console.log(`✅ Recipe ${recipeId} cached for offline viewing`);
+}
+
+async function getCachedRecipes() {
+  const cache = await caches.open(RECIPE_CACHE);
+  const keys = await cache.keys();
+  const recipes = [];
+
+  for (const key of keys) {
+    if (key.url.includes('id=')) {
+      try {
+        const response = await cache.match(key);
+        if (response) {
+          const data = await response.json();
+          if (data.recipe) {
+            recipes.push(data.recipe);
+          }
+        }
+      } catch (e) {
+        console.error('Error reading cached recipe:', e);
+      }
+    }
+  }
+
+  return recipes;
+}
+
+console.log('🚀 BestMealMate Service Worker v3 loaded');

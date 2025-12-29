@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ChefHat,
@@ -27,6 +28,7 @@ import {
   Send,
   Watch
 } from 'lucide-react'
+import { trackSubscriptionConversion } from '@/lib/conversion-tracking'
 
 // Mock data - replace with Supabase queries
 const mockMealPlan = [
@@ -67,12 +69,26 @@ const navItems = [
 ]
 
 export default function DashboardPage() {
+  const searchParams = useSearchParams()
   const [showAIChef, setShowAIChef] = useState(false)
   const [aiInput, setAIInput] = useState('')
   const [aiResponse, setAiResponse] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
   const [showRecipeModal, setShowRecipeModal] = useState(false)
   const [selectedMeal, setSelectedMeal] = useState<typeof mockMealPlan[0] | null>(null)
+
+  // Track Google Ads conversion when user returns from successful checkout
+  useEffect(() => {
+    const upgraded = searchParams.get('upgraded')
+    if (upgraded === 'true') {
+      // Track the purchase conversion
+      trackSubscriptionConversion('premium') // Default to premium, webhook will have actual tier
+      // Clean up URL without refreshing
+      const url = new URL(window.location.href)
+      url.searchParams.delete('upgraded')
+      window.history.replaceState({}, '', url.pathname)
+    }
+  }, [searchParams])
 
   const askAIChef = async (question: string) => {
     if (!question.trim()) return

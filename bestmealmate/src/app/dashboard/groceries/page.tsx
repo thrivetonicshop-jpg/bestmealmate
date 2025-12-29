@@ -16,13 +16,25 @@ import {
   LogOut,
   Share2,
   Download,
-  FileDown
+  FileDown,
+  ExternalLink
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 
 // Dynamically import export modal
 const GroceryListExport = dynamic(() => import('@/components/GroceryListExport'), {
   ssr: false
+})
+
+// Dynamically import Instacart button (client-side only)
+const InstacartButton = dynamic(() => import('@/components/InstacartButton'), {
+  ssr: false,
+  loading: () => (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm animate-pulse">
+      <div className="h-12 bg-gray-200 rounded-xl mb-4"></div>
+      <div className="h-10 bg-gray-200 rounded-lg"></div>
+    </div>
+  )
 })
 import { useAuth } from '@/lib/auth-context'
 import {
@@ -136,6 +148,22 @@ export default function GroceriesPage() {
       total: activeList.items.length,
       purchased: activeList.items.filter(i => i.is_purchased).length
     }
+  }, [activeList])
+
+  // Convert grocery items to Instacart format (unpurchased items only)
+  const instacartItems = useMemo(() => {
+    if (!activeList) return []
+    return activeList.items
+      .filter(item => !item.is_purchased)
+      .map(item => {
+        // Parse quantity string to extract number and unit
+        const quantityMatch = item.quantity?.match(/^(\d+\.?\d*)\s*(.*)$/)
+        return {
+          name: item.name,
+          quantity: quantityMatch ? parseFloat(quantityMatch[1]) : 1,
+          unit: quantityMatch?.[2]?.trim() || 'each'
+        }
+      })
   }, [activeList])
 
   async function toggleItem(itemId: string) {
@@ -509,47 +537,62 @@ export default function GroceriesPage() {
                 </button>
               </div>
             ) : (
-              <div className="space-y-4">
-                {Object.entries(groupedItems).map(([aisle, items]) => (
-                  <div key={aisle} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                      <h3 className="font-semibold text-gray-700">{aisle}</h3>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {items.map(item => (
-                        <div
-                          key={item.id}
-                          className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-                            item.is_purchased ? 'bg-gray-50' : ''
-                          }`}
-                        >
-                          <button
-                            onClick={() => toggleItem(item.id)}
-                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                              item.is_purchased
-                                ? 'bg-brand-600 border-brand-600 text-white'
-                                : 'border-gray-300 hover:border-brand-400'
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Items List */}
+                <div className="lg:col-span-2 space-y-4">
+                  {Object.entries(groupedItems).map(([aisle, items]) => (
+                    <div key={aisle} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                        <h3 className="font-semibold text-gray-700">{aisle}</h3>
+                      </div>
+                      <div className="divide-y divide-gray-100">
+                        {items.map(item => (
+                          <div
+                            key={item.id}
+                            className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                              item.is_purchased ? 'bg-gray-50' : ''
                             }`}
                           >
-                            {item.is_purchased && <Check className="w-4 h-4" />}
-                          </button>
-                          <div className="flex-1">
-                            <span className={`${item.is_purchased ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
-                              {item.name}
-                            </span>
-                            <span className="text-gray-500 ml-2">{item.quantity}</span>
+                            <button
+                              onClick={() => toggleItem(item.id)}
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                item.is_purchased
+                                  ? 'bg-brand-600 border-brand-600 text-white'
+                                  : 'border-gray-300 hover:border-brand-400'
+                              }`}
+                            >
+                              {item.is_purchased && <Check className="w-4 h-4" />}
+                            </button>
+                            <div className="flex-1">
+                              <span className={`${item.is_purchased ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                                {item.name}
+                              </span>
+                              <span className="text-gray-500 ml-2">{item.quantity}</span>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteItem(item.id)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
+                  ))}
+                </div>
+
+                {/* Instacart Order Panel */}
+                <div className="lg:col-span-1">
+                  <div className="sticky top-4">
+                    {instacartItems.length > 0 && (
+                      <InstacartButton
+                        items={instacartItems}
+                        variant="primary"
+                      />
+                    )}
                   </div>
-                ))}
+                </div>
               </div>
             )}
           </>

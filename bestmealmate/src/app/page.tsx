@@ -275,11 +275,11 @@ export default function HomePage() {
             </div>
 
             <div className="hidden md:flex items-center gap-4">
-              <Link href="/login" className="btn-ghost">
-                Sign In
+              <Link href="/login" className="px-4 py-2 text-brand-600 font-semibold hover:text-brand-700 hover:bg-brand-50 rounded-lg transition-colors">
+                Log In
               </Link>
               <Link href="/onboarding" className="btn-primary flex items-center gap-2">
-                Get Started Free
+                Start Free Trial
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -301,9 +301,13 @@ export default function HomePage() {
               <a href="#features" className="block py-2 text-gray-600 hover:text-gray-900 font-medium">Features</a>
               <a href="#how-it-works" className="block py-2 text-gray-600 hover:text-gray-900 font-medium">How it Works</a>
               <a href="#pricing" className="block py-2 text-gray-600 hover:text-gray-900 font-medium">Pricing</a>
-              <div className="pt-4 border-t border-gray-100 space-y-2">
-                <Link href="/login" className="block w-full btn-secondary text-center">Sign In</Link>
-                <Link href="/onboarding" className="block w-full btn-primary text-center">Get Started Free</Link>
+              <div className="pt-4 border-t border-gray-100 space-y-3">
+                <Link href="/login" className="block w-full py-3 text-center text-brand-600 font-semibold bg-brand-50 rounded-xl hover:bg-brand-100 transition-colors">
+                  Log In to Your Account
+                </Link>
+                <Link href="/onboarding" className="block w-full btn-primary text-center py-3">
+                  Start Free Trial
+                </Link>
               </div>
             </div>
           </div>
@@ -368,6 +372,13 @@ export default function HomePage() {
                   <Check className="w-4 h-4 text-brand-600" />
                   Free forever for 1 person
                 </span>
+              </p>
+
+              <p className="mt-4 text-sm text-gray-600 animate-fade-in animate-delay-300">
+                Already have an account?{' '}
+                <Link href="/login" className="text-brand-600 font-semibold hover:text-brand-700 underline underline-offset-2">
+                  Sign in here
+                </Link>
               </p>
             </div>
 
@@ -1358,6 +1369,11 @@ export default function HomePage() {
 
           <p className="text-center text-gray-500 mt-8">
             All plans include a 14-day free trial. Cancel anytime.
+          </p>
+          <p className="text-center mt-4">
+            <Link href="/login" className="text-brand-600 font-semibold hover:text-brand-700 underline underline-offset-2">
+              Already have an account? Log in
+            </Link>
           </p>
         </div>
       </section>
