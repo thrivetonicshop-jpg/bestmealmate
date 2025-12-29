@@ -21,3 +21,7 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Private keys - NEVER commit
+keys/
+*.pem
