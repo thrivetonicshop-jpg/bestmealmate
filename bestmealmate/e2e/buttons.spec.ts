@@ -10,7 +10,8 @@ test.describe('BestMealMate Button Navigation Tests', () => {
 
   test('Homepage loads correctly', async ({ page }) => {
     await expect(page).toHaveTitle(/BestMealMate/);
-    await expect(page.locator('text=Meal planning for real families')).toBeVisible();
+    // Use more specific selector to match h1 content
+    await expect(page.locator('h1').first()).toContainText('Meal planning');
   });
 
   // Navigation buttons

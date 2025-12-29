@@ -8,17 +8,20 @@ test.describe('Landing Page', () => {
   test('displays the main hero section', async ({ page }) => {
     // Check for the main heading
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Meal planning for');
-    await expect(page.locator('text=real families')).toBeVisible();
+    // Use more specific selector to avoid matching multiple elements
+    await expect(page.locator('h1 >> text=real families').first()).toBeVisible();
   });
 
   test('displays the BestMealMate logo and branding', async ({ page }) => {
-    await expect(page.locator('text=BestMealMate')).toBeVisible();
+    // Target the nav link with BestMealMate text
+    await expect(page.getByRole('link', { name: /BestMealMate/i }).first()).toBeVisible();
   });
 
   test('has navigation links', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /features/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /pricing/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible();
+    // Target nav links in header specifically
+    await expect(page.getByRole('navigation').getByRole('link', { name: /features/i })).toBeVisible();
+    await expect(page.getByRole('navigation').getByRole('link', { name: /pricing/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: /sign in/i }).first()).toBeVisible();
   });
 
   test('has call-to-action buttons', async ({ page }) => {
@@ -27,19 +30,21 @@ test.describe('Landing Page', () => {
   });
 
   test('displays feature cards', async ({ page }) => {
-    await expect(page.locator('text=Family Profiles')).toBeVisible();
-    await expect(page.locator('text=Smart Pantry')).toBeVisible();
-    await expect(page.locator('text=AI Chef')).toBeVisible();
-    await expect(page.locator('text=Smart Grocery List')).toBeVisible();
+    // Use first() for elements that appear multiple times on page
+    await expect(page.locator('text=Family Profiles').first()).toBeVisible();
+    await expect(page.locator('text=Smart Pantry').first()).toBeVisible();
+    await expect(page.locator('text=AI Chef').first()).toBeVisible();
+    await expect(page.locator('text=Smart Grocery List').first()).toBeVisible();
   });
 
   test('displays pricing plans', async ({ page }) => {
     // Scroll to pricing section
     await page.locator('#pricing').scrollIntoViewIfNeeded();
 
-    await expect(page.locator('text=$0')).toBeVisible();
-    await expect(page.locator('text=$9.99')).toBeVisible();
-    await expect(page.locator('text=$14.99')).toBeVisible();
+    // Use exact match for prices
+    await expect(page.getByText('$0', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('$9.99', { exact: true })).toBeVisible();
+    await expect(page.getByText('$14.99', { exact: true })).toBeVisible();
   });
 
   test('displays statistics section', async ({ page }) => {
