@@ -38,12 +38,12 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://js.stripe.com https://pagead2.googlesyndication.com https://www.googleadservices.com https://adservice.google.com https://adservice.google.us https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://www.google.com https://partner.googleadservices.com https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://www.google-analytics.com https://api.anthropic.com https://world.openfoodfacts.org",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://www.google-analytics.com https://api.anthropic.com https://world.openfoodfacts.org https://pagead2.googlesyndication.com https://www.googleadservices.com https://adservice.google.com https://adservice.google.us https://googleads.g.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://www.google.com https://pagead2.googlesyndication.com https://partner.googleadservices.com https://adservice.google.com https://adservice.google.us",
               "worker-src 'self' blob:",
               "manifest-src 'self'",
             ].join('; ')
