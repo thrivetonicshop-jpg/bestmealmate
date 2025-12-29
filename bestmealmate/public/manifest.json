@@ -1,50 +1,60 @@
 {
   "name": "BestMealMate",
   "short_name": "MealMate",
-  "description": "AI meal planning for families with multiple diets",
+  "description": "AI meal planning for families with multiple diets. Smart pantry, recipe suggestions, and zero food waste.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#22c55e",
   "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512.png",
+      "src": "/icon.svg",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
-  "categories": ["food", "lifestyle", "health"],
-  "screenshots": [],
+  "categories": ["food", "lifestyle", "health", "productivity"],
+  "prefer_related_applications": false,
   "shortcuts": [
     {
       "name": "Plan Meals",
       "short_name": "Plan",
+      "description": "Plan your weekly meals",
       "url": "/dashboard/plan",
       "icons": [{ "src": "/icon.svg", "sizes": "96x96" }]
     },
     {
       "name": "My Pantry",
       "short_name": "Pantry",
+      "description": "Manage your pantry inventory",
       "url": "/dashboard/pantry",
       "icons": [{ "src": "/icon.svg", "sizes": "96x96" }]
     },
     {
       "name": "Recipes",
       "short_name": "Recipes",
+      "description": "Browse and discover recipes",
       "url": "/dashboard/recipes",
       "icons": [{ "src": "/icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Grocery List",
+      "short_name": "Groceries",
+      "description": "View your grocery list",
+      "url": "/dashboard/groceries",
+      "icons": [{ "src": "/icon.svg", "sizes": "96x96" }]
     }
-  ]
+  ],
+  "related_applications": [],
+  "screenshots": []
 }

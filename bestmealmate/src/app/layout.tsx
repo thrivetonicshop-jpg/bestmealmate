@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/lib/auth-context'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
 import { WebVitals } from '@/components/WebVitals'
 import './globals.css'
 
@@ -343,10 +344,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* PWA Configuration */}
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon.svg" />
         <meta name="theme-color" content="#22c55e" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="BestMealMate" />
+        <meta name="application-name" content="BestMealMate" />
+        <meta name="msapplication-TileColor" content="#22c55e" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="format-detection" content="telephone=no" />
+        <link rel="apple-touch-startup-image" href="/icon.svg" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -398,6 +409,7 @@ export default function RootLayout({
           <Analytics />
           {children}
           <PushNotificationPrompt />
+          <ServiceWorkerRegistration />
           <Toaster
             position="top-center"
             toastOptions={{
