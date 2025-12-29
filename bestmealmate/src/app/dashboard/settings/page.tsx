@@ -26,7 +26,6 @@ import {
   Sun,
   Monitor,
   Save,
-  Gift,
   ExternalLink
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
