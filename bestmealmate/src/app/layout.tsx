@@ -3,8 +3,12 @@ import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/lib/auth-context'
+import { I18nProvider } from '@/lib/i18n'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
+import CookieConsent from '@/components/CookieConsent'
 import { WebVitals } from '@/components/WebVitals'
+import { SkipLinks, ScreenReaderAnnouncer } from '@/components/Accessibility'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -343,10 +347,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* PWA Configuration */}
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon.svg" />
         <meta name="theme-color" content="#22c55e" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="BestMealMate" />
+        <meta name="application-name" content="BestMealMate" />
+        <meta name="msapplication-TileColor" content="#22c55e" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="format-detection" content="telephone=no" />
+        <link rel="apple-touch-startup-image" href="/icon.svg" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -393,11 +407,18 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-white antialiased">
-        <AuthProvider>
-          <WebVitals />
-          <Analytics />
-          {children}
-          <PushNotificationPrompt />
+        <I18nProvider>
+          <AuthProvider>
+            <SkipLinks />
+            <ScreenReaderAnnouncer />
+            <WebVitals />
+            <Analytics />
+            <main id="main-content">
+              {children}
+            </main>
+            <PushNotificationPrompt />
+            <ServiceWorkerRegistration />
+            <CookieConsent />
           <Toaster
             position="top-center"
             toastOptions={{
@@ -414,7 +435,8 @@ export default function RootLayout({
               },
             }}
           />
-        </AuthProvider>
+          </AuthProvider>
+        </I18nProvider>
       </body>
     </html>
   )

@@ -25,10 +25,12 @@ import {
   Moon,
   Sun,
   Monitor,
-  Save
+  Save,
+  ExternalLink
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
 import { useAuth } from '@/lib/auth-context'
+import ReferralProgram from '@/components/ReferralProgram'
 import { saveUserPreferences, getUserPreferences, getLoginHistory, type UserPreferences, type LoginHistoryEntry } from '@/lib/supabase'
 
 export default function SettingsPage() {
@@ -57,6 +59,9 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false)
   const [backingUp, setBackingUp] = useState(false)
   const [loginHistory, setLoginHistory] = useState<LoginHistoryEntry[]>([])
+  const [managingBilling, setManagingBilling] = useState(false)
+  const [deletingAccount, setDeletingAccount] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const loadPreferences = useCallback(async () => {
     if (!user?.id) return
@@ -197,6 +202,58 @@ export default function SettingsPage() {
     setBackingUp(false)
   }
 
+  async function handleManageBilling() {
+    if (!household?.stripe_customer_id) {
+      toast.error('No billing account found')
+      return
+    }
+    setManagingBilling(true)
+    try {
+      const response = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId: household.stripe_customer_id,
+          returnUrl: window.location.href,
+        }),
+      })
+      const data = await response.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error(data.error || 'Failed to open billing portal')
+      }
+    } catch (error) {
+      console.error('Error opening billing portal:', error)
+      toast.error('Failed to open billing portal')
+    }
+    setManagingBilling(false)
+  }
+
+  async function handleDeleteAccount() {
+    if (!user?.id) return
+    setDeletingAccount(true)
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        toast.success('Account deletion scheduled')
+        await signOut()
+      } else {
+        toast.error(data.error || 'Failed to delete account')
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      toast.error('Failed to delete account')
+    }
+    setDeletingAccount(false)
+    setShowDeleteConfirm(false)
+  }
+
   const subscriptionInfo = {
     free: {
       name: 'Free',
@@ -315,7 +372,7 @@ export default function SettingsPage() {
                 ))}
               </ul>
 
-              {currentTier === 'free' && (
+              {currentTier === 'free' ? (
                 <div className="space-y-2">
                   <button
                     onClick={() => handleUpgrade('premium')}
@@ -346,9 +403,32 @@ export default function SettingsPage() {
                     )}
                   </button>
                 </div>
+              ) : (
+                <button
+                  onClick={handleManageBilling}
+                  disabled={managingBilling}
+                  className="w-full py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {managingBilling ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink className="w-4 h-4" />
+                      Manage Billing
+                    </>
+                  )}
+                </button>
               )}
             </div>
           </div>
+
+          {/* Referral Program */}
+          {user?.id && (
+            <ReferralProgram userId={user.id} />
+          )}
 
           {/* Appearance / Theme */}
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -544,14 +624,43 @@ export default function SettingsPage() {
               <p className="text-sm text-red-600 dark:text-red-400">Irreversible actions</p>
             </div>
             <div className="p-6 space-y-4">
-              <button className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium">
-                <Trash2 className="w-5 h-5" />
-                Delete all data
-              </button>
-              <button className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium">
-                <Trash2 className="w-5 h-5" />
-                Delete account
-              </button>
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-2 text-red-600 hover:text-red-700 font-medium"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  Delete account
+                </button>
+              ) : (
+                <div className="p-4 bg-red-50 dark:bg-red-900/30 rounded-lg">
+                  <p className="text-red-700 dark:text-red-300 mb-4">
+                    Are you sure? This will permanently delete your account and all data. This action cannot be undone.
+                  </p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDeleteAccount}
+                      disabled={deletingAccount}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {deletingAccount ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        'Yes, delete my account'
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

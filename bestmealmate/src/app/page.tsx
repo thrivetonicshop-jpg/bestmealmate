@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import EmailCapture from '@/components/EmailCapture'
+import NewsletterSignup from '@/components/NewsletterSignup'
 import {
   ChefHat,
   Users,
@@ -1517,7 +1518,7 @@ export default function HomePage() {
                   <Link href="/about" className="text-gray-400 hover:text-white transition-colors">About</Link>
                 </li>
                 <li>
-                  <a href="https://x.com/bestmealmate" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Blog</a>
+                  <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link>
                 </li>
                 <li>
                   <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Careers</Link>
@@ -1529,8 +1530,17 @@ export default function HomePage() {
             </div>
 
             <div>
-              <h4 className="font-semibold text-white mb-4">Legal</h4>
+              <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2">
+                <li>
+                  <Link href="/help" className="text-gray-400 hover:text-white transition-colors">Help Center</Link>
+                </li>
+                <li>
+                  <Link href="/faq" className="text-gray-400 hover:text-white transition-colors">FAQ</Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Contact Us</Link>
+                </li>
                 <li>
                   <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link>
                 </li>
@@ -1538,7 +1548,7 @@ export default function HomePage() {
                   <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">Terms of Service</Link>
                 </li>
                 <li>
-                  <Link href="/cookies" className="text-gray-400 hover:text-white transition-colors">Cookie Policy</Link>
+                  <Link href="/status" className="text-gray-400 hover:text-white transition-colors">System Status</Link>
                 </li>
               </ul>
             </div>
@@ -1565,6 +1575,17 @@ export default function HomePage() {
                   <span className="text-gray-400 group-hover:text-white text-sm font-medium">YouTube</span>
                 </a>
               </div>
+            </div>
+          </div>
+
+          {/* Newsletter Section */}
+          <div className="py-8 border-t border-gray-800">
+            <div className="grid md:grid-cols-2 gap-8 items-center">
+              <div>
+                <h4 className="font-semibold text-white text-lg mb-2">Get Weekly Meal Ideas</h4>
+                <p className="text-gray-400">Join 10,000+ families getting recipes, meal planning tips, and exclusive offers.</p>
+              </div>
+              <NewsletterSignup variant="inline" className="justify-end" />
             </div>
           </div>
 

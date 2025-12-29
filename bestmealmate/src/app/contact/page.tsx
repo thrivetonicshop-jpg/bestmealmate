@@ -74,8 +74,8 @@ export default function ContactPage() {
                 </div>
                 <h3 className="font-bold text-gray-900 mb-1">Support</h3>
                 <p className="text-gray-600 text-sm mb-2">Need help with your account?</p>
-                <a href="mailto:support@bestmealmate.com" className="text-brand-600 hover:text-brand-700 font-medium">
-                  support@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-brand-600 hover:text-brand-700 font-medium">
+                  hello@bestmealmate.com
                 </a>
               </div>
 

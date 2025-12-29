@@ -23,7 +23,8 @@ import {
   Snowflake,
   Home,
   Package,
-  Camera
+  Camera,
+  Barcode
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/auth-context'
@@ -35,6 +36,14 @@ const FoodScanner = dynamic(() => import('@/components/FoodScanner'), {
   ssr: false,
   loading: () => <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
     <div className="text-white">Loading scanner...</div>
+  </div>
+})
+
+// Dynamically import BarcodeScanner
+const BarcodeScanner = dynamic(() => import('@/components/BarcodeScanner'), {
+  ssr: false,
+  loading: () => <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+    <div className="text-white">Loading barcode scanner...</div>
   </div>
 })
 
@@ -100,6 +109,7 @@ export default function PantryPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showScanner, setShowScanner] = useState(false)
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false)
   const [editingItem, setEditingItem] = useState<PantryItemWithIngredient | null>(null)
   const [formData, setFormData] = useState<FormData>(initialFormData)
   const [searchTerm, setSearchTerm] = useState('')
@@ -148,6 +158,43 @@ export default function PantryPage() {
       }
       setItems(prev => [...prev, newItem])
     }
+  }
+
+  // Handle barcode scanned product
+  const handleBarcodeProduct = (product: { barcode: string; name: string; brand?: string; category?: string; quantity?: string; nutrition?: { calories?: number; protein?: number; carbs?: number; fat?: number } }) => {
+    const quantityMatch = (product.quantity || '1').match(/^([\d.]+)\s*(.*)$/)
+    const quantity = quantityMatch ? parseFloat(quantityMatch[1]) : 1
+    const unit = quantityMatch ? quantityMatch[2] : ''
+
+    const newItem: PantryItemWithIngredient = {
+      id: `barcode-${Date.now()}-${Math.random()}`,
+      household_id: householdId,
+      ingredient_id: `ing-${Date.now()}`,
+      quantity,
+      unit: unit || null,
+      location: 'pantry',
+      expiry_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      added_date: new Date().toISOString().split('T')[0],
+      is_staple: false,
+      notes: product.brand ? `${product.brand} - Barcode: ${product.barcode}` : `Barcode: ${product.barcode}`,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ingredients: {
+        id: `ing-${Date.now()}`,
+        name: product.name,
+        category: product.category || 'Other',
+        default_unit: unit || null,
+        calories_per_unit: product.nutrition?.calories || null,
+        protein_per_unit: product.nutrition?.protein || null,
+        carbs_per_unit: product.nutrition?.carbs || null,
+        fat_per_unit: product.nutrition?.fat || null,
+        barcode: product.barcode,
+        image_url: null,
+        avg_shelf_life_days: null,
+        created_at: new Date().toISOString()
+      }
+    }
+    setItems(prev => [...prev, newItem])
   }
 
   useEffect(() => {
@@ -574,6 +621,13 @@ export default function PantryPage() {
           </div>
           <div className="flex gap-2">
             <button
+              onClick={() => setShowBarcodeScanner(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors"
+            >
+              <Barcode className="w-5 h-5" />
+              Barcode
+            </button>
+            <button
               onClick={() => setShowScanner(true)}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl font-medium hover:bg-purple-700 transition-colors"
             >
@@ -960,6 +1014,13 @@ export default function PantryPage() {
         <FoodScanner
           onItemsDetected={handleScannedItems}
           onClose={() => setShowScanner(false)}
+        />
+      )}
+
+      {showBarcodeScanner && (
+        <BarcodeScanner
+          onProductScanned={handleBarcodeProduct}
+          onClose={() => setShowBarcodeScanner(false)}
         />
       )}
     </div>

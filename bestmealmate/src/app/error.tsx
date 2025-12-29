@@ -59,7 +59,7 @@ export default function Error({
 
         <p className="mt-8 text-sm text-gray-500">
           If this problem persists, please{' '}
-          <a href="mailto:support@bestmealmate.com" className="text-brand-600 hover:underline">
+          <a href="mailto:hello@bestmealmate.com" className="text-brand-600 hover:underline">
             contact support
           </a>
         </p>

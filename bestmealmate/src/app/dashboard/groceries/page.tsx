@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import {
   ChefHat,
   Calendar,
@@ -14,9 +15,15 @@ import {
   Settings,
   LogOut,
   Share2,
-  Download
+  Download,
+  FileDown
 } from 'lucide-react'
 import toast, { Toaster } from 'react-hot-toast'
+
+// Dynamically import export modal
+const GroceryListExport = dynamic(() => import('@/components/GroceryListExport'), {
+  ssr: false
+})
 import { useAuth } from '@/lib/auth-context'
 import {
   getGroceryLists,
@@ -47,6 +54,7 @@ export default function GroceriesPage() {
   const [newItemName, setNewItemName] = useState('')
   const [newItemQuantity, setNewItemQuantity] = useState('')
   const [showAddItem, setShowAddItem] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const loadLists = useCallback(async () => {
@@ -438,8 +446,16 @@ export default function GroceriesPage() {
                 <button
                   onClick={handleExportList}
                   className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Quick copy"
                 >
                   <Download className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setShowExportModal(true)}
+                  className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="Export options"
+                >
+                  <FileDown className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -563,6 +579,14 @@ export default function GroceriesPage() {
           ))}
         </div>
       </nav>
+
+      {/* Export Modal */}
+      {showExportModal && activeList && (
+        <GroceryListExport
+          list={activeList}
+          onClose={() => setShowExportModal(false)}
+        />
+      )}
     </div>
   )
 }

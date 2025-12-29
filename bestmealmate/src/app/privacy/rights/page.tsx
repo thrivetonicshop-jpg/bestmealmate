@@ -282,8 +282,8 @@ export default function PrivacyRights() {
                 <ul className="list-disc pl-6 text-sm space-y-1">
                   <li>
                     <strong>Email:</strong>{' '}
-                    <a href="mailto:privacy@bestmealmate.com" className="text-orange-600 hover:underline">
-                      privacy@bestmealmate.com
+                    <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                      hello@bestmealmate.com
                     </a>
                   </li>
                   <li>
@@ -330,18 +330,18 @@ export default function PrivacyRights() {
             <h2 className="text-xl font-semibold text-gray-900 mb-3">Contact Our Privacy Team</h2>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p><strong>Data Protection Officer:</strong>{' '}
-                <a href="mailto:dpo@bestmealmate.com" className="text-orange-600 hover:underline">
-                  dpo@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
               <p><strong>Privacy Inquiries:</strong>{' '}
-                <a href="mailto:privacy@bestmealmate.com" className="text-orange-600 hover:underline">
-                  privacy@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
               <p><strong>General Support:</strong>{' '}
-                <a href="mailto:support@bestmealmate.com" className="text-orange-600 hover:underline">
-                  support@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
               <p className="mt-2"><strong>Mailing Address:</strong><br />

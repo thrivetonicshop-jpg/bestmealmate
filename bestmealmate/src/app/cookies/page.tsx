@@ -348,13 +348,13 @@ export default function CookiePolicy() {
             </p>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p><strong>Email:</strong>{' '}
-                <a href="mailto:privacy@bestmealmate.com" className="text-orange-600 hover:underline">
-                  privacy@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
               <p><strong>General Support:</strong>{' '}
-                <a href="mailto:support@bestmealmate.com" className="text-orange-600 hover:underline">
-                  support@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
             </div>
