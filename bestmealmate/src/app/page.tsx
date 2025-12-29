@@ -1518,7 +1518,7 @@ export default function HomePage() {
                   <Link href="/about" className="text-gray-400 hover:text-white transition-colors">About</Link>
                 </li>
                 <li>
-                  <a href="https://x.com/bestmealmate" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">Blog</a>
+                  <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link>
                 </li>
                 <li>
                   <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">Careers</Link>
@@ -1546,6 +1546,9 @@ export default function HomePage() {
                 </li>
                 <li>
                   <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">Terms of Service</Link>
+                </li>
+                <li>
+                  <Link href="/status" className="text-gray-400 hover:text-white transition-colors">System Status</Link>
                 </li>
               </ul>
             </div>
