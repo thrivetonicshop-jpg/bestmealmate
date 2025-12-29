@@ -1,0 +1,20 @@
+{
+  "com.bestmealmate.premium_monthly": {
+    "itemType": "SUBSCRIPTION",
+    "price": 9.99,
+    "title": "BestMealMate Premium",
+    "description": "AI-powered meal planning, unlimited recipes, pantry tracking, and smart grocery lists. Auto-renews monthly.",
+    "smallIconUrl": "https://www.bestmealmate.com/icon-192.png",
+    "subscriptionParent": "com.bestmealmate.premium",
+    "subscriptionPeriod": "Monthly"
+  },
+  "com.bestmealmate.family_monthly": {
+    "itemType": "SUBSCRIPTION",
+    "price": 14.99,
+    "title": "BestMealMate Family",
+    "description": "Everything in Premium plus up to 6 family members, shared meal plans, and dietary preferences for each member. Auto-renews monthly.",
+    "smallIconUrl": "https://www.bestmealmate.com/icon-192.png",
+    "subscriptionParent": "com.bestmealmate.family",
+    "subscriptionPeriod": "Monthly"
+  }
+}
