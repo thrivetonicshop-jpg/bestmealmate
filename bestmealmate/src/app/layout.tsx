@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/lib/auth-context'
 import PushNotificationPrompt from '@/components/PushNotificationPrompt'
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration'
+import CookieConsent from '@/components/CookieConsent'
 import { WebVitals } from '@/components/WebVitals'
 import './globals.css'
 
@@ -410,6 +411,7 @@ export default function RootLayout({
           {children}
           <PushNotificationPrompt />
           <ServiceWorkerRegistration />
+          <CookieConsent />
           <Toaster
             position="top-center"
             toastOptions={{
