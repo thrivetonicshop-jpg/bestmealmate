@@ -136,8 +136,8 @@ export default function TermsOfService() {
             </ul>
             <p className="mt-3">
               To request a refund, email{' '}
-              <a href="mailto:billing@bestmealmate.com" className="text-orange-600 hover:underline">
-                billing@bestmealmate.com
+              <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                hello@bestmealmate.com
               </a>{' '}
               with your account email and reason for the request.
             </p>
@@ -286,8 +286,8 @@ export default function TermsOfService() {
             <h3 className="text-lg font-medium text-gray-800 mt-4 mb-2">13.1 Informal Resolution</h3>
             <p>
               Before filing any formal dispute, you agree to contact us at{' '}
-              <a href="mailto:legal@bestmealmate.com" className="text-orange-600 hover:underline">
-                legal@bestmealmate.com
+              <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                hello@bestmealmate.com
               </a>{' '}
               and attempt to resolve the dispute informally for at least 30 days.
             </p>
@@ -343,18 +343,18 @@ export default function TermsOfService() {
             <p className="mb-3">For questions about these Terms, contact us:</p>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p><strong>Legal Inquiries:</strong>{' '}
-                <a href="mailto:legal@bestmealmate.com" className="text-orange-600 hover:underline">
-                  legal@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
               <p><strong>Billing Questions:</strong>{' '}
-                <a href="mailto:billing@bestmealmate.com" className="text-orange-600 hover:underline">
-                  billing@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
               <p><strong>General Support:</strong>{' '}
-                <a href="mailto:support@bestmealmate.com" className="text-orange-600 hover:underline">
-                  support@bestmealmate.com
+                <a href="mailto:hello@bestmealmate.com" className="text-orange-600 hover:underline">
+                  hello@bestmealmate.com
                 </a>
               </p>
               <p className="mt-2"><strong>Mailing Address:</strong><br />
