@@ -23,8 +23,10 @@ import {
   X,
   SlidersHorizontal,
   BookOpen,
-  TrendingUp
+  TrendingUp,
+  Link2
 } from 'lucide-react'
+import RecipeImporter from '@/components/RecipeImporter'
 import toast, { Toaster } from 'react-hot-toast'
 
 interface Recipe {
@@ -1880,6 +1882,31 @@ export default function RecipesPage() {
   const [filterKidFriendly, setFilterKidFriendly] = useState(false)
   const [filterFavorites, setFilterFavorites] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [showImporter, setShowImporter] = useState(false)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function handleRecipeImported(importedRecipe: any) {
+    const newRecipe: Recipe = {
+      id: importedRecipe.id,
+      name: importedRecipe.name,
+      description: importedRecipe.description,
+      cuisine: importedRecipe.cuisine || 'International',
+      meal_type: importedRecipe.meal_type || 'dinner',
+      prep_time_minutes: importedRecipe.prep_time || 15,
+      cook_time_minutes: importedRecipe.cook_time || 30,
+      difficulty: (importedRecipe.difficulty?.toLowerCase() || 'medium') as 'easy' | 'medium' | 'hard',
+      servings: importedRecipe.servings || 4,
+      image_url: importedRecipe.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400',
+      is_kid_friendly: importedRecipe.dietary?.includes('kid-friendly') || false,
+      is_quick_meal: (importedRecipe.prep_time + importedRecipe.cook_time) <= 30,
+      tags: importedRecipe.dietary || [],
+      rating: 0,
+      is_favorite: false,
+      calories: importedRecipe.calories || 400
+    }
+    setRecipes([newRecipe, ...recipes])
+    toast.success(`"${newRecipe.name}" added to your recipes!`)
+  }
 
   const filteredRecipes = useMemo(() => {
     return recipes.filter(recipe => {
@@ -2006,10 +2033,19 @@ export default function RecipesPage() {
                 </h1>
                 <p className="text-gray-500">Discover delicious meals for your family</p>
               </div>
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-medium hover:shadow-glow transition-all">
-                <Plus className="w-5 h-5" />
-                Add Recipe
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowImporter(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 border border-brand-500 text-brand-600 rounded-xl font-medium hover:bg-brand-50 transition-all"
+                >
+                  <Link2 className="w-5 h-5" />
+                  Import
+                </button>
+                <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-medium hover:shadow-glow transition-all">
+                  <Plus className="w-5 h-5" />
+                  Add Recipe
+                </button>
+              </div>
             </div>
           </div>
         </header>
@@ -2284,6 +2320,14 @@ export default function RecipesPage() {
           ))}
         </div>
       </nav>
+
+      {/* Recipe Importer Modal */}
+      {showImporter && (
+        <RecipeImporter
+          onRecipeImported={handleRecipeImported}
+          onClose={() => setShowImporter(false)}
+        />
+      )}
     </div>
   )
 }
