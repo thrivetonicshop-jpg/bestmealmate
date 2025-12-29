@@ -3,11 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-export const metadata = {
-  title: 'Delete Account | BestMealMate',
-  description: 'Request deletion of your BestMealMate account and associated data.',
-}
-
 export default function DeleteAccountPage() {
   const [email, setEmail] = useState('')
   const [reason, setReason] = useState('')
