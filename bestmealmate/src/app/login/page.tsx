@@ -124,6 +124,7 @@ export default function LoginPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     required
+                    autoComplete="email"
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none transition-all text-gray-900 placeholder:text-gray-400"
                   />
                 </div>
@@ -142,6 +143,7 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     required
                     minLength={6}
+                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none transition-all text-gray-900 placeholder:text-gray-400"
                   />
                 </div>
