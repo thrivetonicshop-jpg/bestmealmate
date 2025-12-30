@@ -18,14 +18,16 @@ test.describe('Landing Page', () => {
   });
 
   test('has navigation links', async ({ page }) => {
-    // Target nav links in header specifically
-    await expect(page.getByRole('navigation').getByRole('link', { name: /features/i })).toBeVisible();
-    await expect(page.getByRole('navigation').getByRole('link', { name: /pricing/i })).toBeVisible();
+    // Target nav links in header specifically - using anchor tags for features/pricing
+    await expect(page.locator('nav a[href="#features"]')).toBeVisible();
+    await expect(page.locator('nav a[href="#pricing"]')).toBeVisible();
     await expect(page.getByRole('link', { name: /sign in/i }).first()).toBeVisible();
   });
 
   test('has call-to-action buttons', async ({ page }) => {
     await expect(page.getByRole('link', { name: /get started free/i }).first()).toBeVisible();
+    // Scroll to pricing section to find Start Planning Free
+    await page.locator('#pricing').scrollIntoViewIfNeeded();
     await expect(page.getByRole('link', { name: /start planning free/i })).toBeVisible();
   });
 
@@ -48,7 +50,7 @@ test.describe('Landing Page', () => {
   });
 
   test('displays statistics section', async ({ page }) => {
-    await expect(page.locator('text=50K+')).toBeVisible();
+    await expect(page.locator('text=50K+').first()).toBeVisible();
     await expect(page.locator('text=Happy Families')).toBeVisible();
   });
 
