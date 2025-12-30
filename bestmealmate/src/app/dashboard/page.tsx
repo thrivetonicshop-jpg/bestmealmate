@@ -37,6 +37,7 @@ import { trackSubscriptionConversion } from '@/lib/conversion-tracking'
 import { useAuth } from '@/lib/auth-context'
 import TodaysMeals, { type TodaysMeal, type MealOption, type UserGoals } from '@/components/TodaysMeals'
 import CookingMode from '@/components/CookingMode'
+import PantrySuggestions, { type ExpiringItem } from '@/components/PantrySuggestions'
 
 // Navigation items
 const navItems = [
@@ -70,11 +71,98 @@ export default function DashboardPage() {
   const [aiResponse, setAiResponse] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
 
-  // Mock data for expiring items and family
-  const [expiringItems] = useState([
-    { name: 'Chicken Breast', days: 1, location: 'Fridge', emoji: '🍗' },
-    { name: 'Spinach', days: 2, location: 'Fridge', emoji: '🥬' },
-    { name: 'Greek Yogurt', days: 3, location: 'Fridge', emoji: '🥛' },
+  // Pantry savings tracking
+  const [savingsThisMonth] = useState(47.50)
+  const [wastedThisMonth] = useState(12.00)
+
+  // Mock data for expiring items with cost and recipe suggestions
+  const [expiringItems] = useState<ExpiringItem[]>([
+    {
+      id: '1',
+      name: 'Chicken Breast',
+      emoji: '🍗',
+      quantity: 2,
+      unit: 'lbs',
+      expiryDate: new Date(Date.now() + 1 * 86400000),
+      daysUntilExpiry: 1,
+      location: 'fridge',
+      estimatedValue: 8.99,
+      suggestedRecipes: [
+        { id: 'r1', name: 'Honey Garlic Chicken', emoji: '🍯', usesItems: ['Chicken Breast'], prepTime: '30 min' },
+        { id: 'r2', name: 'Chicken Stir Fry', emoji: '🥡', usesItems: ['Chicken Breast', 'Spinach'], prepTime: '25 min' },
+      ]
+    },
+    {
+      id: '2',
+      name: 'Spinach',
+      emoji: '🥬',
+      quantity: 1,
+      unit: 'bag',
+      expiryDate: new Date(Date.now() + 2 * 86400000),
+      daysUntilExpiry: 2,
+      location: 'fridge',
+      estimatedValue: 3.49,
+      suggestedRecipes: [
+        { id: 'r3', name: 'Spinach Salad', emoji: '🥗', usesItems: ['Spinach'], prepTime: '10 min' },
+        { id: 'r4', name: 'Green Smoothie', emoji: '🥤', usesItems: ['Spinach', 'Greek Yogurt'], prepTime: '5 min' },
+      ]
+    },
+    {
+      id: '3',
+      name: 'Greek Yogurt',
+      emoji: '🥛',
+      quantity: 32,
+      unit: 'oz',
+      expiryDate: new Date(Date.now() + 3 * 86400000),
+      daysUntilExpiry: 3,
+      location: 'fridge',
+      estimatedValue: 5.99,
+      suggestedRecipes: [
+        { id: 'r5', name: 'Yogurt Parfait', emoji: '🥣', usesItems: ['Greek Yogurt'], prepTime: '5 min' },
+      ]
+    },
+    {
+      id: '4',
+      name: 'Ground Beef',
+      emoji: '🥩',
+      quantity: 1,
+      unit: 'lb',
+      expiryDate: new Date(Date.now() + 2 * 86400000),
+      daysUntilExpiry: 2,
+      location: 'fridge',
+      estimatedValue: 6.99,
+      suggestedRecipes: [
+        { id: 'r6', name: 'Beef Tacos', emoji: '🌮', usesItems: ['Ground Beef'], prepTime: '20 min' },
+        { id: 'r7', name: 'Spaghetti Bolognese', emoji: '🍝', usesItems: ['Ground Beef'], prepTime: '35 min' },
+      ]
+    },
+    {
+      id: '5',
+      name: 'Bell Peppers',
+      emoji: '🫑',
+      quantity: 3,
+      unit: 'pcs',
+      expiryDate: new Date(Date.now() + 5 * 86400000),
+      daysUntilExpiry: 5,
+      location: 'fridge',
+      estimatedValue: 4.50,
+      suggestedRecipes: []
+    },
+    {
+      id: '6',
+      name: 'Salmon Fillet',
+      emoji: '🐟',
+      quantity: 1,
+      unit: 'lb',
+      expiryDate: new Date(Date.now() + 1 * 86400000),
+      daysUntilExpiry: 1,
+      location: 'fridge',
+      estimatedValue: 12.99,
+      suggestedRecipes: [
+        { id: 'r8', name: 'Lemon Herb Salmon', emoji: '🍋', usesItems: ['Salmon Fillet'], prepTime: '25 min' },
+        { id: 'r9', name: 'Salmon Bowl', emoji: '🍚', usesItems: ['Salmon Fillet'], prepTime: '30 min' },
+      ]
+    },
   ])
 
   const [familyMembers] = useState([
@@ -114,7 +202,7 @@ export default function DashboardPage() {
             dietary_restrictions: m.restrictions.filter(r => !r.includes('Allergy')),
             allergies: m.restrictions.filter(r => r.includes('Allergy')).map(a => ({ name: a.replace(' Allergy', ''), severity: 'severe' })),
           })),
-          pantryItems: expiringItems.map(i => ({ name: i.name, quantity: 1, unit: 'piece', expiry_date: new Date(Date.now() + i.days * 86400000).toISOString() })),
+          pantryItems: expiringItems.map(i => ({ name: i.name, quantity: i.quantity, unit: i.unit, expiry_date: i.expiryDate.toISOString() })),
           frozenMeals: frozenMeals.map(m => ({ ...m, frozenDate: new Date().toISOString(), protein: 30, carbs: 40, fat: 15 })),
           mealTypes: ['breakfast', 'lunch', 'dinner'],
           preferences: {
@@ -449,52 +537,25 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            {/* Sidebar */}
+            {/* Sidebar - Pantry Savings */}
             <div className="space-y-6">
-              {/* Expiring Soon */}
-              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                    <AlertTriangle className="w-5 h-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-900">Expiring Soon</h3>
-                    <p className="text-sm text-gray-500">Use these first</p>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {expiringItems.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer">
-                      <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-xl shadow-sm">
-                        {item.emoji}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-xs text-gray-500">{item.location}</p>
-                      </div>
-                      <span className={`text-sm font-semibold px-2.5 py-1 rounded-lg ${
-                        item.days <= 1
-                          ? 'bg-red-100 text-red-700'
-                          : item.days <= 2
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
-                      }`}>
-                        {item.days === 1 ? 'Tomorrow' : `${item.days} days`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={() => {
-                    setShowAIChef(true)
-                    askAIChef('What can I make with ' + expiringItems.map(i => i.name).join(', ') + '?')
-                  }}
-                  className="w-full mt-4 py-3 text-brand-600 font-semibold text-sm hover:text-brand-700 transition-colors flex items-center justify-center gap-2 bg-brand-50 rounded-xl hover:bg-brand-100"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  Get recipe suggestions
-                </button>
-              </div>
+              {/* Smart Pantry Savings */}
+              <PantrySuggestions
+                expiringItems={expiringItems}
+                savingsThisMonth={savingsThisMonth}
+                wastedThisMonth={wastedThisMonth}
+                onUseItem={(itemId, recipeId) => {
+                  console.log('Using item:', itemId, 'for recipe:', recipeId)
+                  // Navigate to recipe or mark as used
+                }}
+                onDismissItem={(itemId) => {
+                  console.log('Dismissing item:', itemId)
+                }}
+                onGenerateRecipe={(items) => {
+                  setShowAIChef(true)
+                  askAIChef('Create a recipe using: ' + items.map(i => i.name).join(', '))
+                }}
+              />
 
               {/* Quick Actions */}
               <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
