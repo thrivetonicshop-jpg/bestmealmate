@@ -38,7 +38,9 @@ import {
   Upload,
   Image as ImageIcon,
   Loader2,
-  ScanLine
+  ScanLine,
+  BookOpen,
+  Save
 } from 'lucide-react'
 import { trackSubscriptionConversion } from '@/lib/conversion-tracking'
 import { useAuth } from '@/lib/auth-context'
@@ -52,9 +54,9 @@ const navItems = [
   { icon: Calendar, label: 'Meal Plan', href: '/dashboard', active: true },
   { icon: ShoppingCart, label: 'Grocery List', href: '/dashboard/groceries', active: false },
   { icon: Refrigerator, label: 'Pantry', href: '/dashboard/pantry', active: false },
+  { icon: BookOpen, label: 'Cookbook', href: '/dashboard/cookbook', active: false },
   { icon: ChefHat, label: 'Recipes', href: '/dashboard/recipes', active: false },
   { icon: Users, label: 'Family', href: '/dashboard/family', active: false },
-  { icon: Watch, label: 'Health', href: '/dashboard/wearables', active: false },
 ]
 
 export default function DashboardPage() {
@@ -1193,6 +1195,30 @@ export default function DashboardPage() {
                       Get Recipes
                     </button>
                   </div>
+
+                  {/* Save to Cookbook */}
+                  <button
+                    onClick={() => {
+                      // Save scanned items to localStorage for cookbook to pick up
+                      const scannedRecipe = {
+                        id: `scanned-${Date.now()}`,
+                        name: `Scanned Ingredients (${new Date().toLocaleDateString()})`,
+                        emoji: '📸',
+                        ingredients: scanResults.map(r => ({ name: r.name, amount: '' })),
+                        source: 'scanned',
+                        createdAt: new Date().toISOString(),
+                        previewImage: previewImage
+                      }
+                      const existing = JSON.parse(localStorage.getItem('pendingCookbookItems') || '[]')
+                      localStorage.setItem('pendingCookbookItems', JSON.stringify([...existing, scannedRecipe]))
+                      closeFoodScanner()
+                      window.location.href = '/dashboard/cookbook?from=scan'
+                    }}
+                    className="w-full mt-3 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium hover:shadow-lg transition-all"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    Save to Cookbook
+                  </button>
 
                   <button
                     onClick={() => {
