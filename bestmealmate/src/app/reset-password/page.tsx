@@ -15,15 +15,60 @@ export default function ResetPasswordPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState('')
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user has a valid session from the reset link
+    let timeoutId: NodeJS.Timeout
+
+    // Listen for auth state changes (PASSWORD_RECOVERY event)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event)
+
+        if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+          // User clicked the recovery link and session is established
+          setIsValidSession(true)
+          setIsCheckingSession(false)
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          setIsValidSession(true)
+          setIsCheckingSession(false)
+        }
+      }
+    )
+
+    // Also check existing session after a brief delay
+    // (allows hash fragments to be processed by Supabase)
     const checkSession = async () => {
+      // Wait a moment for Supabase to process URL hash tokens
+      await new Promise(resolve => setTimeout(resolve, 500))
+
       const { data: { session } } = await supabase.auth.getSession()
-      setIsValidSession(!!session)
+
+      // Only set to invalid if we haven't received a valid event
+      if (isCheckingSession) {
+        setIsValidSession(!!session)
+        setIsCheckingSession(false)
+      }
     }
+
     checkSession()
+
+    // Fallback timeout - don't wait forever
+    timeoutId = setTimeout(() => {
+      if (isCheckingSession) {
+        setIsCheckingSession(false)
+        if (isValidSession === null) {
+          setIsValidSession(false)
+        }
+      }
+    }, 3000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeoutId)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const validatePassword = (pwd: string) => {
@@ -74,10 +119,13 @@ export default function ResetPasswordPage() {
     }
   }
 
-  if (isValidSession === null) {
+  if (isCheckingSession || isValidSession === null) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-brand-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Verifying your reset link...</p>
+        </div>
       </div>
     )
   }

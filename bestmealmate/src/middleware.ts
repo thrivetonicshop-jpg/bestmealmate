@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
@@ -24,16 +23,37 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Get session token from cookie
+  // Check for our custom auth token cookie (set by auth callback)
+  const customAuthToken = request.cookies.get('sb-auth-token')?.value
+
+  // Get session token from traditional Supabase cookie names
   const accessToken = request.cookies.get('sb-access-token')?.value
   const refreshToken = request.cookies.get('sb-refresh-token')?.value
 
-  // Alternative: check for auth cookie (Supabase stores it differently)
-  const authCookie = request.cookies.getAll().find(c =>
-    c.name.includes('supabase') && c.name.includes('auth')
+  // Also check for Supabase's default cookie format (sb-<project-ref>-auth-token)
+  const allCookies = request.cookies.getAll()
+  const supabaseAuthCookie = allCookies.find(c =>
+    (c.name.startsWith('sb-') && c.name.endsWith('-auth-token')) ||
+    (c.name.includes('supabase') && c.name.includes('auth'))
   )
 
-  const hasSession = !!(accessToken || refreshToken || authCookie)
+  // Determine if user has a valid session
+  let hasSession = !!(customAuthToken || accessToken || refreshToken || supabaseAuthCookie)
+
+  // Validate custom auth token if present
+  if (customAuthToken) {
+    try {
+      const sessionData = JSON.parse(customAuthToken)
+      if (sessionData.access_token && sessionData.expires_at) {
+        // Check if token is not expired
+        const expiresAt = new Date(sessionData.expires_at * 1000)
+        hasSession = expiresAt > new Date()
+      }
+    } catch {
+      // Invalid token format, treat as not authenticated
+      hasSession = false
+    }
+  }
 
   // Redirect logic
   if (isProtectedRoute && !hasSession) {
