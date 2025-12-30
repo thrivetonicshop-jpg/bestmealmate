@@ -31,13 +31,16 @@ import {
   Target,
   RefreshCw,
   Snowflake,
-  Star
+  Star,
+  Recycle,
+  Package
 } from 'lucide-react'
 import { trackSubscriptionConversion } from '@/lib/conversion-tracking'
 import { useAuth } from '@/lib/auth-context'
 import TodaysMeals, { type TodaysMeal, type MealOption, type UserGoals } from '@/components/TodaysMeals'
 import CookingMode from '@/components/CookingMode'
 import PantrySuggestions, { type ExpiringItem } from '@/components/PantrySuggestions'
+import LeftoverRecipes, { type LeftoverItem, type TransformRecipe } from '@/components/LeftoverRecipes'
 
 // Navigation items
 const navItems = [
@@ -171,6 +174,67 @@ export default function DashboardPage() {
     { id: '3', name: 'Jake', avatar: '👦', restrictions: ['Nut Allergy'], color: 'from-orange-500 to-orange-600' },
     { id: '4', name: 'Emma', avatar: '👧', restrictions: [], color: 'from-purple-500 to-purple-600' },
   ])
+
+  // Leftover items state
+  const [leftoverItems, setLeftoverItems] = useState<LeftoverItem[]>([
+    {
+      id: 'l1',
+      name: 'Grilled Chicken',
+      emoji: '🍗',
+      quantity: '1.5 cups shredded',
+      originalMeal: 'Honey Garlic Chicken',
+      daysOld: 1,
+      safeToUse: true
+    },
+    {
+      id: 'l2',
+      name: 'Steamed Rice',
+      emoji: '🍚',
+      quantity: '2 cups',
+      originalMeal: 'Asian Stir Fry',
+      daysOld: 1,
+      safeToUse: true
+    },
+    {
+      id: 'l3',
+      name: 'Roasted Vegetables',
+      emoji: '🥕',
+      quantity: '1 cup mixed',
+      originalMeal: 'Sheet Pan Dinner',
+      daysOld: 2,
+      safeToUse: true
+    },
+    {
+      id: 'l4',
+      name: 'Pasta with Sauce',
+      emoji: '🍝',
+      quantity: '2 servings',
+      originalMeal: 'Spaghetti Bolognese',
+      daysOld: 3,
+      safeToUse: true
+    },
+    {
+      id: 'l5',
+      name: 'Mashed Potatoes',
+      emoji: '🥔',
+      quantity: '1.5 cups',
+      originalMeal: 'Sunday Roast',
+      daysOld: 4,
+      safeToUse: true
+    },
+    {
+      id: 'l6',
+      name: 'Old Soup',
+      emoji: '🥣',
+      quantity: '1 container',
+      originalMeal: 'Vegetable Soup',
+      daysOld: 6,
+      safeToUse: false
+    }
+  ])
+
+  // View mode for showing leftovers panel
+  const [showLeftovers, setShowLeftovers] = useState(false)
 
   // Track Google Ads conversion when user returns from successful checkout
   useEffect(() => {
@@ -346,6 +410,23 @@ export default function DashboardPage() {
     if (hour < 12) return 'Good morning'
     if (hour < 17) return 'Good afternoon'
     return 'Good evening'
+  }
+
+  // Leftover recipe handlers
+  const handleSelectLeftoverRecipe = (recipe: TransformRecipe, selectedLeftovers: LeftoverItem[]) => {
+    // Navigate to cooking mode with the selected recipe
+    console.log('Selected recipe:', recipe, 'with leftovers:', selectedLeftovers)
+    // Could convert to a TodaysMeal format and start cooking
+  }
+
+  const handleGenerateLeftoverRecipes = (leftovers: LeftoverItem[]) => {
+    setShowAIChef(true)
+    const leftoverNames = leftovers.map(l => l.name).join(', ')
+    askAIChef(`Create creative recipes using these leftovers: ${leftoverNames}`)
+  }
+
+  const handleMarkLeftoverUsed = (leftoverId: string) => {
+    setLeftoverItems(prev => prev.filter(l => l.id !== leftoverId))
   }
 
   // Get next meal to cook
@@ -535,6 +616,59 @@ export default function DashboardPage() {
                   <ChevronRight className="w-6 h-6" />
                 </div>
               </Link>
+
+              {/* Batch Meal Prep Link */}
+              <Link href="/dashboard/meal-prep" className="block bg-gradient-to-r from-orange-500 to-amber-500 rounded-3xl p-6 text-white hover:shadow-lg transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                      <Package className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-xl">Batch Meal Prep</h3>
+                      <p className="text-white/80">Prep multiple meals at once and save time</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-6 h-6" />
+                </div>
+              </Link>
+
+              {/* Leftover Recipes Toggle */}
+              <button
+                onClick={() => setShowLeftovers(!showLeftovers)}
+                className={`w-full flex items-center justify-between p-6 rounded-3xl transition-all ${
+                  showLeftovers
+                    ? 'bg-orange-500 text-white'
+                    : 'bg-white border border-gray-200 hover:border-orange-300'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
+                    showLeftovers ? 'bg-white/20' : 'bg-orange-100'
+                  }`}>
+                    <Recycle className={`w-7 h-7 ${showLeftovers ? 'text-white' : 'text-orange-600'}`} />
+                  </div>
+                  <div className="text-left">
+                    <h3 className={`font-bold text-xl ${showLeftovers ? 'text-white' : 'text-gray-900'}`}>
+                      Leftover Magic
+                    </h3>
+                    <p className={showLeftovers ? 'text-white/80' : 'text-gray-500'}>
+                      {leftoverItems.filter(l => l.safeToUse).length} leftovers ready to transform
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className={`w-6 h-6 transition-transform ${showLeftovers ? 'rotate-90' : ''}`} />
+              </button>
+
+              {/* Leftover Recipes Panel */}
+              {showLeftovers && (
+                <LeftoverRecipes
+                  leftovers={leftoverItems}
+                  onSelectRecipe={handleSelectLeftoverRecipe}
+                  onGenerateRecipes={handleGenerateLeftoverRecipes}
+                  onMarkUsed={handleMarkLeftoverUsed}
+                />
+              )}
             </div>
 
             {/* Sidebar - Pantry Savings */}
