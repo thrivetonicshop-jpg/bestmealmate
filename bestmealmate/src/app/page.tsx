@@ -48,6 +48,7 @@ export default function HomePage() {
   const [showMealPlanModal, setShowMealPlanModal] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedMeal, setGeneratedMeal] = useState<{name: string, time: string, description: string, ingredients: string[]} | null>(null)
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
 
   const mealSuggestions = [
     { name: "Honey Garlic Chicken", time: "30 min", description: "Tender chicken thighs glazed with a sweet and savory honey garlic sauce, served with steamed broccoli.", ingredients: ["Chicken thighs", "Honey", "Garlic", "Soy sauce", "Broccoli"] },
@@ -326,25 +327,26 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left content */}
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-medium mb-6 animate-fade-in">
-                <Sparkles className="w-4 h-4" />
-                AI-Powered Meal Planning
+              {/* Scanner Hero Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-orange-700 text-sm font-medium mb-6 animate-fade-in border border-orange-200">
+                <Camera className="w-4 h-4" />
+                NEW: AI Food Scanner — Point, Scan, Plan!
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold text-gray-900 leading-[1.1] mb-6 animate-slide-up">
-                Meal planning for
-                <span className="text-gradient block">real families</span>
+                Scan your fridge.
+                <span className="text-gradient block">Get dinner planned.</span>
               </h1>
 
               <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-xl mx-auto lg:mx-0 animate-slide-up animate-delay-100">
-                Different tastes. Allergies. Picky eaters. Expiring food. The endless &quot;what&apos;s for dinner?&quot; question.
-                <span className="font-semibold text-gray-900"> We solve all of it.</span>
+                Point your camera at groceries — AI identifies everything instantly. Get personalized meal plans based on what you have.
+                <span className="font-semibold text-gray-900"> No other app does this.</span>
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-slide-up animate-delay-200">
-                <Link href="/onboarding" className="btn-primary text-lg px-8 py-4 flex items-center justify-center gap-2 shadow-glow">
-                  Start Planning Free
-                  <ArrowRight className="w-5 h-5" />
+                <Link href="/try" className="btn-primary text-lg px-8 py-4 flex items-center justify-center gap-2 shadow-glow bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                  <Camera className="w-5 h-5" />
+                  Try 5 Free Scans
                 </Link>
                 <button
                   onClick={generateMealPlan}
@@ -366,11 +368,11 @@ export default function HomePage() {
               <p className="mt-6 text-sm text-gray-500 flex items-center gap-4 justify-center lg:justify-start animate-fade-in animate-delay-300">
                 <span className="flex items-center gap-1">
                   <Check className="w-4 h-4 text-brand-600" />
-                  No credit card required
+                  No signup required
                 </span>
                 <span className="flex items-center gap-1">
                   <Check className="w-4 h-4 text-brand-600" />
-                  Free forever for 1 person
+                  5 free scans to try
                 </span>
               </p>
 
@@ -1282,7 +1284,7 @@ export default function HomePage() {
       {/* Pricing Section */}
       <section id="pricing" className="py-20 lg:py-28 bg-gray-50 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-100 text-brand-700 text-sm font-medium mb-4">
               <Shield className="w-4 h-4" />
               Simple Pricing
@@ -1291,6 +1293,21 @@ export default function HomePage() {
             <p className="section-subtitle">
               Start free. Upgrade when your family needs more.
             </p>
+          </div>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4 mb-12">
+            <span className={`font-medium ${billingPeriod === 'monthly' ? 'text-gray-900' : 'text-gray-400'}`}>Monthly</span>
+            <button
+              onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'annual' : 'monthly')}
+              className={`relative w-16 h-8 rounded-full transition-colors ${billingPeriod === 'annual' ? 'bg-brand-500' : 'bg-gray-300'}`}
+            >
+              <span className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${billingPeriod === 'annual' ? 'translate-x-9' : 'translate-x-1'}`} />
+            </button>
+            <span className={`font-medium ${billingPeriod === 'annual' ? 'text-gray-900' : 'text-gray-400'}`}>
+              Annual
+              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">Save 17%</span>
+            </span>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -1325,8 +1342,18 @@ export default function HomePage() {
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Premium</h3>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl font-bold text-gray-900">$9.99</span>
-                  <span className="text-gray-500">/month</span>
+                  {billingPeriod === 'monthly' ? (
+                    <>
+                      <span className="text-5xl font-bold text-gray-900">$9.99</span>
+                      <span className="text-gray-500">/month</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-5xl font-bold text-gray-900">$99</span>
+                      <span className="text-gray-500">/year</span>
+                      <span className="ml-2 text-sm text-green-600 font-medium">($8.25/mo)</span>
+                    </>
+                  )}
                 </div>
                 <p className="text-gray-600">For couples and small families</p>
               </div>
@@ -1338,7 +1365,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/onboarding?plan=premium" className="block w-full btn-primary text-center">
+              <Link href={`/onboarding?plan=premium&billing=${billingPeriod}`} className="block w-full btn-primary text-center">
                 Start Free Trial
               </Link>
             </div>
@@ -1348,8 +1375,18 @@ export default function HomePage() {
               <div className="mb-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Family</h3>
                 <div className="flex items-baseline gap-1 mb-2">
-                  <span className="text-5xl font-bold text-gray-900">$14.99</span>
-                  <span className="text-gray-500">/month</span>
+                  {billingPeriod === 'monthly' ? (
+                    <>
+                      <span className="text-5xl font-bold text-gray-900">$14.99</span>
+                      <span className="text-gray-500">/month</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-5xl font-bold text-gray-900">$149</span>
+                      <span className="text-gray-500">/year</span>
+                      <span className="ml-2 text-sm text-green-600 font-medium">($12.42/mo)</span>
+                    </>
+                  )}
                 </div>
                 <p className="text-gray-600">For large households</p>
               </div>
@@ -1361,7 +1398,7 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/onboarding?plan=family" className="block w-full btn-secondary text-center">
+              <Link href={`/onboarding?plan=family&billing=${billingPeriod}`} className="block w-full btn-secondary text-center">
                 Start Free Trial
               </Link>
             </div>

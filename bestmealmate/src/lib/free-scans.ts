@@ -1,11 +1,11 @@
 /**
  * Free Scans Manager
- * Handles the 3 free food scans trial for new users
+ * Handles the 5 free food scans trial for new users
  */
 
 const FREE_SCANS_KEY = 'freeScansRemaining'
 const FREE_SCANS_TOTAL_KEY = 'freeScansTotal'
-const DEFAULT_FREE_SCANS = 3
+const DEFAULT_FREE_SCANS = 5
 
 export interface FreeScanStatus {
   remaining: number
