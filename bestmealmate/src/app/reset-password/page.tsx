@@ -15,15 +15,52 @@ export default function ResetPasswordPage() {
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState('')
   const [isValidSession, setIsValidSession] = useState<boolean | null>(null)
+  const [isProcessingToken, setIsProcessingToken] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user has a valid session from the reset link
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setIsValidSession(!!session)
+    // Handle the hash fragment from Supabase password reset email
+    const handleHashParams = async () => {
+      // Get hash parameters (Supabase puts tokens in hash for password reset)
+      const hash = window.location.hash.substring(1)
+      const params = new URLSearchParams(hash)
+
+      const accessToken = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
+      const type = params.get('type')
+
+      // If we have tokens from the hash (password recovery link)
+      if (accessToken && type === 'recovery') {
+        try {
+          // Set the session using the tokens from the hash
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          })
+
+          if (sessionError) {
+            console.error('Session error:', sessionError)
+            setError(sessionError.message)
+            setIsValidSession(false)
+          } else {
+            setIsValidSession(true)
+            // Clear the hash from URL for security
+            window.history.replaceState(null, '', window.location.pathname)
+          }
+        } catch (err) {
+          console.error('Error setting session:', err)
+          setIsValidSession(false)
+        }
+      } else {
+        // No hash tokens, check for existing session
+        const { data: { session } } = await supabase.auth.getSession()
+        setIsValidSession(!!session)
+      }
+
+      setIsProcessingToken(false)
     }
-    checkSession()
+
+    handleHashParams()
   }, [])
 
   const validatePassword = (pwd: string) => {
@@ -74,10 +111,14 @@ export default function ResetPasswordPage() {
     }
   }
 
-  if (isValidSession === null) {
+  // Show loading while processing the token
+  if (isProcessingToken) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-brand-500 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Verifying your reset link...</p>
+        </div>
       </div>
     )
   }
