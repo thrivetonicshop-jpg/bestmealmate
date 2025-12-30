@@ -49,7 +49,7 @@ export default function TryPage() {
   const [showScanner, setShowScanner] = useState(false)
   const [scannedItems, setScannedItems] = useState<TrialItem[]>([])
   const [showDemo, setShowDemo] = useState(true)
-  const [freeScans, setFreeScans] = useState(3)
+  const [freeScans, setFreeScans] = useState(5)
   const [showSignupPrompt, setShowSignupPrompt] = useState(false)
 
   useEffect(() => {
@@ -350,7 +350,7 @@ export default function TryPage() {
                 Loved It?
               </h2>
               <p className="text-gray-600 mb-6">
-                You&apos;ve used all 3 free scans. Create a free account to continue!
+                You&apos;ve used all 5 free scans. Create a free account to continue!
               </p>
 
               <div className="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-2xl p-4 mb-6 text-left">

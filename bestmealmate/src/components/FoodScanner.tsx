@@ -277,7 +277,7 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Free Scans Used</h2>
         <p className="text-gray-600 mb-6">
-          You&apos;ve used all 3 free scans. Upgrade to Premium for unlimited scanning!
+          You&apos;ve used all 5 free scans. Upgrade to Premium for unlimited scanning!
         </p>
 
         <div className="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-2xl p-4 mb-6">

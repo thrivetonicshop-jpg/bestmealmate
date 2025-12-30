@@ -47,8 +47,8 @@ export default function OnboardingPage() {
   useEffect(() => {
     const existing = localStorage.getItem('freeScansRemaining')
     if (!existing) {
-      localStorage.setItem('freeScansRemaining', '3')
-      localStorage.setItem('freeScansTotal', '3')
+      localStorage.setItem('freeScansRemaining', '5')
+      localStorage.setItem('freeScansTotal', '5')
     }
   }, [])
 
@@ -56,8 +56,8 @@ export default function OnboardingPage() {
   const handleTryFree = () => {
     // Ensure free scans are set
     if (!localStorage.getItem('freeScansRemaining')) {
-      localStorage.setItem('freeScansRemaining', '3')
-      localStorage.setItem('freeScansTotal', '3')
+      localStorage.setItem('freeScansRemaining', '5')
+      localStorage.setItem('freeScansTotal', '5')
     }
     // Mark as guest trial user
     localStorage.setItem('guestTrialMode', 'true')
@@ -121,8 +121,8 @@ export default function OnboardingPage() {
 
       // Ensure free scans are set
       if (!localStorage.getItem('freeScansRemaining')) {
-        localStorage.setItem('freeScansRemaining', '3')
-        localStorage.setItem('freeScansTotal', '3')
+        localStorage.setItem('freeScansRemaining', '5')
+        localStorage.setItem('freeScansTotal', '5')
       }
 
       setIsComplete(true)
@@ -233,7 +233,7 @@ export default function OnboardingPage() {
                 >
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <Gift className="w-5 h-5" />
-                    <span className="font-bold text-lg">3 FREE Food Scans</span>
+                    <span className="font-bold text-lg">5 FREE Food Scans</span>
                   </div>
                   <p className="text-white/90 text-sm">Try our AI scanner - no signup required!</p>
                 </motion.div>
@@ -270,7 +270,7 @@ export default function OnboardingPage() {
                     className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-semibold text-lg hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30"
                   >
                     <Zap className="w-5 h-5" />
-                    Try 3 Free Scans Now
+                    Try 5 Free Scans Now
                   </motion.button>
 
                   {/* Secondary: Create Account */}
