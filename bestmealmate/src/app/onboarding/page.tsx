@@ -1,88 +1,78 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChefHat,
   ArrowRight,
   ArrowLeft,
-  Users,
-  Plus,
-  X,
+  Camera,
+  Utensils,
+  ShoppingCart,
   Sparkles,
-  Check
+  Check,
+  Eye,
+  EyeOff,
+  Gift,
+  Zap
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-// Types
-interface FamilyMember {
-  id: string
-  name: string
-  age: string
-  isPicky: boolean
-  allergies: string[]
-  restrictions: string[]
-  dislikes: string[]
-}
-
-const ALLERGIES = [
-  'Nuts', 'Peanuts', 'Dairy', 'Eggs', 'Shellfish',
-  'Fish', 'Soy', 'Wheat/Gluten', 'Sesame'
+// Feature highlights for welcome screen
+const FEATURES = [
+  { icon: Camera, title: 'Scan Your Food', desc: 'AI identifies items instantly' },
+  { icon: Utensils, title: 'Smart Meal Plans', desc: 'Personalized for your family' },
+  { icon: ShoppingCart, title: 'Grocery Lists', desc: 'Auto-generated from meals' },
 ]
 
-const RESTRICTIONS = [
-  'Vegetarian', 'Vegan', 'Halal', 'Kosher', 'Keto',
-  'Paleo', 'Low Sodium', 'Low Sugar', 'Diabetic-Friendly'
+// Quick diet options
+const QUICK_DIETS = [
+  'None', 'Vegetarian', 'Vegan', 'Keto', 'Gluten-Free', 'Dairy-Free', 'Low-Carb', 'Halal', 'Kosher'
 ]
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0) // 0 = welcome, 1 = account, 2 = done
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [householdName, setHouseholdName] = useState('')
-  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([
-    { id: '1', name: '', age: '', isPicky: false, allergies: [], restrictions: [], dislikes: [] }
-  ])
+  const [name, setName] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [householdSize, setHouseholdSize] = useState(2)
+  const [diet, setDiet] = useState('None')
   const [isLoading, setIsLoading] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
 
-  const totalSteps = 3
-
-  const addFamilyMember = () => {
-    setFamilyMembers([
-      ...familyMembers,
-      { id: Date.now().toString(), name: '', age: '', isPicky: false, allergies: [], restrictions: [], dislikes: [] }
-    ])
-  }
-
-  const removeFamilyMember = (id: string) => {
-    if (familyMembers.length > 1) {
-      setFamilyMembers(familyMembers.filter(m => m.id !== id))
+  // Initialize free scans for new users
+  useEffect(() => {
+    const existing = localStorage.getItem('freeScansRemaining')
+    if (!existing) {
+      localStorage.setItem('freeScansRemaining', '3')
+      localStorage.setItem('freeScansTotal', '3')
     }
-  }
+  }, [])
 
-  const updateMember = (id: string, field: keyof FamilyMember, value: any) => {
-    setFamilyMembers(familyMembers.map(m => 
-      m.id === id ? { ...m, [field]: value } : m
-    ))
-  }
-
-  const toggleArrayItem = (id: string, field: 'allergies' | 'restrictions', item: string) => {
-    setFamilyMembers(familyMembers.map(m => {
-      if (m.id !== id) return m
-      const arr = m[field]
-      return {
-        ...m,
-        [field]: arr.includes(item) ? arr.filter(i => i !== item) : [...arr, item]
-      }
-    }))
+  // Try free - go to trial experience page
+  const handleTryFree = () => {
+    // Ensure free scans are set
+    if (!localStorage.getItem('freeScansRemaining')) {
+      localStorage.setItem('freeScansRemaining', '3')
+      localStorage.setItem('freeScansTotal', '3')
+    }
+    // Mark as guest trial user
+    localStorage.setItem('guestTrialMode', 'true')
+    // Go to try page with full trial experience
+    router.push('/try')
   }
 
   const handleSubmit = async () => {
+    if (!email || !password || password.length < 6) {
+      toast.error('Please fill in all fields (password 6+ characters)')
+      return
+    }
+
     setIsLoading(true)
     try {
-      // Import Supabase
       const { supabase, createHouseholdWithMember } = await import('@/lib/supabase')
 
       // 1. Create user account
@@ -97,379 +87,375 @@ export default function OnboardingPage() {
       if (authError) throw authError
       if (!authData.user) throw new Error('Failed to create user')
 
-      // 2. Create household and family member
+      // 2. Create household
+      const householdName = name ? `${name}'s Kitchen` : 'My Kitchen'
       const { household } = await createHouseholdWithMember(
         authData.user.id,
-        householdName || 'My Household',
-        familyMembers[0]?.name || email.split('@')[0],
+        householdName,
+        name || email.split('@')[0],
         email
       )
 
-      // 3. Add additional family members
-      for (let i = 1; i < familyMembers.length; i++) {
-        const member = familyMembers[i]
-        if (!member.name.trim()) continue
-
-        const { data: newMember, error: memberError } = await supabase
+      // 3. Add dietary restriction if selected
+      if (diet !== 'None') {
+        const { data: adminMember } = await supabase
           .from('family_members')
-          .insert({
-            household_id: household.id,
-            name: member.name,
-            age: member.age ? parseInt(member.age) : null,
-            is_picky_eater: member.isPicky,
-            role: 'member',
-          })
-          .select()
+          .select('id')
+          .eq('household_id', household.id)
+          .eq('role', 'admin')
           .single()
 
-        if (memberError) {
-          console.error('Error adding family member:', memberError)
-          continue
-        }
-
-        // Add allergies for this member
-        if (member.allergies.length > 0 && newMember) {
-          const allergyInserts = member.allergies.map(allergen => ({
-            family_member_id: newMember.id,
-            allergen,
-            severity: 'moderate' as const,
-          }))
-          await supabase.from('allergies').insert(allergyInserts)
-        }
-
-        // Add dietary restrictions for this member
-        if (member.restrictions.length > 0 && newMember) {
-          const restrictionInserts = member.restrictions.map(restriction_type => ({
-            family_member_id: newMember.id,
-            restriction_type,
-          }))
-          await supabase.from('dietary_restrictions').insert(restrictionInserts)
+        if (adminMember) {
+          await supabase.from('dietary_restrictions').insert({
+            family_member_id: adminMember.id,
+            restriction_type: diet,
+          })
         }
       }
 
-      // 4. Add allergies and restrictions for the first member (admin)
-      const { data: adminMember } = await supabase
-        .from('family_members')
-        .select('id')
-        .eq('household_id', household.id)
-        .eq('role', 'admin')
-        .single()
+      // 4. Store household size preference
+      localStorage.setItem('preferredServings', householdSize.toString())
 
-      if (adminMember && familyMembers[0]) {
-        if (familyMembers[0].allergies.length > 0) {
-          const allergyInserts = familyMembers[0].allergies.map(allergen => ({
-            family_member_id: adminMember.id,
-            allergen,
-            severity: 'moderate' as const,
-          }))
-          await supabase.from('allergies').insert(allergyInserts)
-        }
+      // Clear guest trial mode
+      localStorage.removeItem('guestTrialMode')
 
-        if (familyMembers[0].restrictions.length > 0) {
-          const restrictionInserts = familyMembers[0].restrictions.map(restriction_type => ({
-            family_member_id: adminMember.id,
-            restriction_type,
-          }))
-          await supabase.from('dietary_restrictions').insert(restrictionInserts)
-        }
-
-        // Update picky eater status
-        if (familyMembers[0].isPicky) {
-          await supabase
-            .from('family_members')
-            .update({ is_picky_eater: true })
-            .eq('id', adminMember.id)
-        }
+      // Ensure free scans are set
+      if (!localStorage.getItem('freeScansRemaining')) {
+        localStorage.setItem('freeScansRemaining', '3')
+        localStorage.setItem('freeScansTotal', '3')
       }
 
-      toast.success('Welcome to BestMealMate! Check your email to confirm your account.')
-      router.push('/dashboard')
+      setIsComplete(true)
+
+      // Brief delay for success animation
+      setTimeout(() => {
+        toast.success('Welcome to BestMealMate!')
+        router.push('/dashboard')
+      }, 1500)
+
     } catch (error: unknown) {
       console.error('Onboarding error:', error)
-      const message = error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+      const message = error instanceof Error ? error.message : 'Something went wrong'
       toast.error(message)
-    } finally {
       setIsLoading(false)
     }
   }
 
   const canProceed = () => {
-    switch (step) {
-      case 1: return email && password && password.length >= 6 // Account
-      case 2: return familyMembers.some(m => m.name.trim()) // At least one family member
-      case 3: return true // Dietary details (optional)
-      default: return true
-    }
+    if (step === 1) return email && password && password.length >= 6
+    return true
+  }
+
+  // Success overlay
+  if (isComplete) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center text-white"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring' }}
+            className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6"
+          >
+            <Check className="w-12 h-12 text-brand-600" />
+          </motion.div>
+          <h1 className="text-3xl font-bold mb-2">You&apos;re all set!</h1>
+          <p className="text-white/80">Let&apos;s start planning meals...</p>
+        </motion.div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-brand-50 to-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ChefHat className="w-7 h-7 text-brand-600" />
-            <span className="text-lg font-bold text-gray-900">BestMealMate</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {[1, 2, 3].map(s => (
-              <div
-                key={s}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  s <= step ? 'bg-brand-600' : 'bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-brand-50 via-white to-white overflow-hidden">
+      {/* Progress bar */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-200 z-50">
+        <motion.div
+          className="h-full bg-brand-500"
+          initial={{ width: '0%' }}
+          animate={{ width: step === 0 ? '33%' : step === 1 ? '66%' : '100%' }}
+          transition={{ duration: 0.3 }}
+        />
+      </div>
 
       {/* Content */}
-      <main className="pt-20 pb-32 px-4">
-        <div className="max-w-2xl mx-auto">
-          <AnimatePresence mode="wait">
-            {/* Step 1: Create Account */}
-            {step === 1 && (
-              <motion.div
-                key="account"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="pt-8"
-              >
+      <main className="min-h-screen flex flex-col">
+        <AnimatePresence mode="wait">
+          {/* Step 0: Welcome */}
+          {step === 0 && (
+            <motion.div
+              key="welcome"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col px-4 pt-12 pb-24"
+            >
+              <div className="max-w-md mx-auto w-full flex-1 flex flex-col">
+                {/* Logo and title */}
                 <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Sparkles className="w-8 h-8 text-brand-600" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    Welcome to BestMealMate
-                  </h2>
-                  <p className="text-gray-600">Create your account in seconds</p>
+                  <motion.div
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="w-20 h-20 bg-brand-500 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/30"
+                  >
+                    <ChefHat className="w-10 h-10 text-white" />
+                  </motion.div>
+                  <motion.h1
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-3xl font-bold text-gray-900 mb-2"
+                  >
+                    BestMealMate
+                  </motion.h1>
+                  <motion.p
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-gray-600"
+                  >
+                    AI-powered meal planning for your family
+                  </motion.p>
                 </div>
 
-                <div className="space-y-4 max-w-md mx-auto">
+                {/* Free trial badge */}
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl p-4 mb-8 text-center shadow-lg"
+                >
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Gift className="w-5 h-5" />
+                    <span className="font-bold text-lg">3 FREE Food Scans</span>
+                  </div>
+                  <p className="text-white/90 text-sm">Try our AI scanner - no signup required!</p>
+                </motion.div>
+
+                {/* Features */}
+                <div className="space-y-3 mb-8">
+                  {FEATURES.map((feature, i) => (
+                    <motion.div
+                      key={feature.title}
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                      className="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm border border-gray-100"
+                    >
+                      <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <feature.icon className="w-6 h-6 text-brand-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{feature.title}</h3>
+                        <p className="text-sm text-gray-500">{feature.desc}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* CTA Buttons */}
+                <div className="mt-auto space-y-3">
+                  {/* Primary: Try Free (no signup) */}
+                  <motion.button
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.8 }}
+                    onClick={handleTryFree}
+                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-semibold text-lg hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30"
+                  >
+                    <Zap className="w-5 h-5" />
+                    Try 3 Free Scans Now
+                  </motion.button>
+
+                  {/* Secondary: Create Account */}
+                  <motion.button
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.9 }}
+                    onClick={() => setStep(1)}
+                    className="w-full py-4 bg-brand-600 text-white rounded-2xl font-semibold text-lg hover:bg-brand-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-600/30"
+                  >
+                    Create Free Account
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.button>
+
+                  <p className="text-center text-sm text-gray-500 mt-2">
+                    Already have an account?{' '}
+                    <button onClick={() => router.push('/login')} className="text-brand-600 font-medium hover:underline">
+                      Sign in
+                    </button>
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 1: Quick Setup */}
+          {step === 1 && (
+            <motion.div
+              key="setup"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col px-4 pt-12 pb-24"
+            >
+              <div className="max-w-md mx-auto w-full flex-1 flex flex-col">
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <motion.div
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                  >
+                    <Sparkles className="w-8 h-8 text-brand-600" />
+                  </motion.div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">Quick Setup</h2>
+                  <p className="text-gray-500">Just a few details to personalize your experience</p>
+                </div>
+
+                {/* Form */}
+                <div className="space-y-4 flex-1">
+                  {/* Name (optional) */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Your name <span className="text-gray-400">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="What should we call you?"
+                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-gray-900 placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email *</label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all"
+                      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-gray-900 placeholder:text-gray-400"
+                      autoComplete="email"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="At least 6 characters"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Household name <span className="text-gray-400">(optional)</span></label>
-                    <input
-                      type="text"
-                      value={householdName}
-                      onChange={(e) => setHouseholdName(e.target.value)}
-                      placeholder="The Smith Family"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            )}
 
-            {/* Step 2: Add Family Members */}
-            {step === 2 && (
-              <motion.div
-                key="family"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="pt-8"
-              >
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-brand-600" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    Who&apos;s eating?
-                  </h2>
-                  <p className="text-gray-600">Add everyone who eats dinner together</p>
-                </div>
-
-                <div className="space-y-3 max-w-md mx-auto">
-                  {familyMembers.map((member) => (
-                    <div key={member.id} className="flex items-center gap-2 bg-white p-3 rounded-xl border border-gray-200">
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Password *</label>
+                    <div className="relative">
                       <input
-                        type="text"
-                        value={member.name}
-                        onChange={(e) => updateMember(member.id, 'name', e.target.value)}
-                        placeholder="Name"
-                        className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="6+ characters"
+                        className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-100 outline-none transition-all text-gray-900 placeholder:text-gray-400 pr-12"
+                        autoComplete="new-password"
                       />
-                      <input
-                        type="number"
-                        value={member.age}
-                        onChange={(e) => updateMember(member.id, 'age', e.target.value)}
-                        placeholder="Age"
-                        className="w-16 px-3 py-2 rounded-lg border border-gray-300 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none text-center"
-                      />
-                      <label className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          checked={member.isPicky}
-                          onChange={(e) => updateMember(member.id, 'isPicky', e.target.checked)}
-                          className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-                        />
-                        <span className="text-gray-500">Picky</span>
-                      </label>
-                      {familyMembers.length > 1 && (
-                        <button
-                          onClick={() => removeFamilyMember(member.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
                     </div>
-                  ))}
+                  </div>
 
+                  {/* Household size */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      How many people eat together?
+                    </label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5, 6].map((num) => (
+                        <button
+                          key={num}
+                          onClick={() => setHouseholdSize(num)}
+                          className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                            householdSize === num
+                              ? 'bg-brand-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {num}{num === 6 ? '+' : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Diet preference */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                      Any dietary preference?
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {QUICK_DIETS.map((d) => (
+                        <button
+                          key={d}
+                          onClick={() => setDiet(d)}
+                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                            diet === d
+                              ? 'bg-brand-600 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <div className="mt-6 flex gap-3">
                   <button
-                    onClick={addFamilyMember}
-                    className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-brand-400 hover:text-brand-600 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => setStep(0)}
+                    className="px-6 py-3.5 rounded-xl font-medium text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
                   >
-                    <Plus className="w-5 h-5" />
-                    Add another person
+                    <ArrowLeft className="w-5 h-5" />
+                    Back
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={!canProceed() || isLoading}
+                    className={`flex-1 py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 ${
+                      canProceed() && !isLoading
+                        ? 'bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-600/30 active:scale-[0.98]'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      <>
+                        Start Cooking
+                        <Sparkles className="w-5 h-5" />
+                      </>
+                    )}
                   </button>
                 </div>
-              </motion.div>
-            )}
 
-            {/* Step 3: Dietary Details */}
-            {step === 3 && (
-              <motion.div
-                key="details"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="pt-8"
-              >
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-brand-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <Check className="w-8 h-8 text-brand-600" />
-                  </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    Any dietary needs?
-                  </h2>
-                  <p className="text-gray-600">Optional - you can skip this step</p>
-                </div>
-
-                <div className="space-y-4 max-w-lg mx-auto">
-                  {familyMembers.filter(m => m.name.trim()).map((member) => (
-                    <div key={member.id} className="bg-white rounded-xl p-4 border border-gray-200">
-                      <h3 className="font-semibold text-gray-900 mb-3">{member.name}</h3>
-
-                      {/* Allergies */}
-                      <div className="mb-3">
-                        <p className="text-xs font-medium text-gray-500 mb-2">ALLERGIES</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {ALLERGIES.map(allergy => (
-                            <button
-                              key={allergy}
-                              onClick={() => toggleArrayItem(member.id, 'allergies', allergy)}
-                              className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
-                                member.allergies.includes(allergy)
-                                  ? 'bg-red-100 text-red-700 border border-red-300'
-                                  : 'bg-gray-100 text-gray-600 border border-transparent hover:bg-gray-200'
-                              }`}
-                            >
-                              {allergy}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Dietary Restrictions */}
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 mb-2">DIET</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {RESTRICTIONS.map(restriction => (
-                            <button
-                              key={restriction}
-                              onClick={() => toggleArrayItem(member.id, 'restrictions', restriction)}
-                              className={`px-2.5 py-1 rounded-full text-xs transition-colors ${
-                                member.restrictions.includes(restriction)
-                                  ? 'bg-brand-100 text-brand-700 border border-brand-300'
-                                  : 'bg-gray-100 text-gray-600 border border-transparent hover:bg-gray-200'
-                              }`}
-                            >
-                              {restriction}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                <p className="text-center text-xs text-gray-400 mt-4">
+                  By continuing, you agree to our Terms of Service and Privacy Policy
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
-
-      {/* Footer Navigation */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          {step > 1 ? (
-            <button
-              onClick={() => setStep(step - 1)}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </button>
-          ) : (
-            <div />
-          )}
-          
-          {step < totalSteps ? (
-            <button
-              onClick={() => canProceed() && setStep(step + 1)}
-              disabled={!canProceed()}
-              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-colors ${
-                canProceed()
-                  ? 'bg-brand-600 text-white hover:bg-brand-700'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Next
-              <ArrowRight className="w-5 h-5" />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isLoading}
-              className="flex items-center gap-2 px-6 py-3 bg-brand-600 text-white rounded-xl font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5" />
-                  Generate My Meal Plan
-                </>
-              )}
-            </button>
-          )}
-        </div>
-      </footer>
     </div>
   )
 }

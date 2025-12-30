@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import {
   Camera,
   X,
@@ -13,10 +13,14 @@ import {
   Image as ImageIcon,
   Refrigerator,
   Package,
-  Snowflake
+  Snowflake,
+  Sparkles,
+  Lock,
+  Gift
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { uploadFoodScanImage } from '@/lib/supabase'
+import { getFreeScanStatus, consumeFreeScan, canScan, hasActiveSubscription, FreeScanStatus } from '@/lib/free-scans'
 
 interface DetectedItem {
   name: string
@@ -46,6 +50,7 @@ interface FoodScannerProps {
 }
 
 export default function FoodScanner({ onItemsDetected, onClose, householdId }: FoodScannerProps) {
+  const router = useRouter()
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -59,8 +64,14 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
   const [scanLocation, setScanLocation] = useState<'fridge' | 'freezer' | 'pantry'>('fridge')
   const [nutritionSummary, setNutritionSummary] = useState<NutritionSummary | null>(null)
-  const [scanMode, setScanMode] = useState<'camera' | 'barcode'>('camera')
   const [savedImageUrl, setSavedImageUrl] = useState<string | null>(null)
+  const [scanStatus, setScanStatus] = useState<FreeScanStatus | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+
+  // Load scan status on mount
+  useEffect(() => {
+    setScanStatus(getFreeScanStatus())
+  }, [])
 
   // Start camera
   const startCamera = useCallback(async () => {
@@ -96,8 +107,18 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
     setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'))
   }, [stopCamera])
 
+  // Check if scan is allowed before capturing
+  const checkAndCapture = useCallback(() => {
+    if (!canScan()) {
+      setShowUpgradeModal(true)
+      return
+    }
+    captureImageInternal()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // Capture image
-  const captureImage = useCallback(() => {
+  const captureImageInternal = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return
 
     setIsCapturing(true)
@@ -112,6 +133,13 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
       const imageData = canvas.toDataURL('image/jpeg', 0.8)
       setCapturedImage(imageData)
       stopCamera()
+
+      // Consume a free scan if not subscribed
+      if (!hasActiveSubscription()) {
+        consumeFreeScan()
+        setScanStatus(getFreeScanStatus())
+      }
+
       analyzeImage(imageData)
     }
     setIsCapturing(false)
@@ -120,8 +148,19 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
 
   // Handle file upload
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canScan()) {
+      setShowUpgradeModal(true)
+      return
+    }
+
     const file = event.target.files?.[0]
     if (file) {
+      // Consume a free scan if not subscribed
+      if (!hasActiveSubscription()) {
+        consumeFreeScan()
+        setScanStatus(getFreeScanStatus())
+      }
+
       const reader = new FileReader()
       reader.onloadend = () => {
         const imageData = reader.result as string
@@ -147,7 +186,6 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
           setSavedImageUrl(imageUrl)
         } catch (storageError) {
           console.warn('Could not save image to storage:', storageError)
-          // Continue with analysis even if storage fails
         }
       }
 
@@ -168,7 +206,6 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
       if (data.items && data.items.length > 0) {
         setDetectedItems(data.items)
         setNutritionSummary(data.nutritionSummary || null)
-        // Select all items by default
         setSelectedItems(new Set(data.items.map((_: DetectedItem, i: number) => i)))
         toast.success(`Found ${data.items.length} items!`)
       } else {
@@ -231,8 +268,58 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode])
 
+  // Upgrade Modal
+  const UpgradeModal = () => (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center">
+        <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Lock className="w-8 h-8 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Free Scans Used</h2>
+        <p className="text-gray-600 mb-6">
+          You&apos;ve used all 3 free scans. Upgrade to Premium for unlimited scanning!
+        </p>
+
+        <div className="bg-gradient-to-r from-brand-50 to-emerald-50 rounded-2xl p-4 mb-6">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Sparkles className="w-5 h-5 text-brand-600" />
+            <span className="font-bold text-brand-700">Premium Benefits</span>
+          </div>
+          <ul className="text-sm text-gray-600 space-y-1">
+            <li>Unlimited food scans</li>
+            <li>AI meal suggestions</li>
+            <li>Smart grocery lists</li>
+            <li>Nutrition tracking</li>
+          </ul>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={() => {
+              onClose()
+              router.push('/dashboard/settings?upgrade=true')
+            }}
+            className="w-full py-3.5 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-xl font-semibold hover:from-brand-700 hover:to-brand-800 transition-all flex items-center justify-center gap-2"
+          >
+            <Sparkles className="w-5 h-5" />
+            Upgrade to Premium - $9.99/mo
+          </button>
+          <button
+            onClick={() => setShowUpgradeModal(false)}
+            className="w-full py-3 text-gray-500 hover:text-gray-700 font-medium transition-colors"
+          >
+            Maybe Later
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
+      {/* Upgrade Modal */}
+      {showUpgradeModal && <UpgradeModal />}
+
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 p-4 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent">
         <button
@@ -241,7 +328,16 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
         >
           <X className="w-6 h-6" />
         </button>
-        <h2 className="text-white font-semibold text-lg">Scan Your {scanLocation === 'fridge' ? 'Fridge' : scanLocation === 'freezer' ? 'Freezer' : 'Pantry'}</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-white font-semibold text-lg">Scan Your {scanLocation === 'fridge' ? 'Fridge' : scanLocation === 'freezer' ? 'Freezer' : 'Pantry'}</h2>
+          {/* Free scans badge */}
+          {scanStatus && !hasActiveSubscription() && scanStatus.remaining > 0 && (
+            <div className="flex items-center gap-1 bg-amber-500 text-white text-xs font-medium px-2 py-1 rounded-full">
+              <Gift className="w-3 h-3" />
+              {scanStatus.remaining} free
+            </div>
+          )}
+        </div>
         <button
           onClick={switchCamera}
           className="p-2 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
@@ -440,7 +536,13 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
         <div className="absolute bottom-0 left-0 right-0 z-10 p-6 bg-gradient-to-t from-black/70 to-transparent">
           <div className="flex items-center justify-center gap-6">
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (!canScan()) {
+                  setShowUpgradeModal(true)
+                } else {
+                  fileInputRef.current?.click()
+                }
+              }}
               className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white hover:bg-white/30 transition-colors"
             >
               <ImageIcon className="w-6 h-6" />
@@ -454,7 +556,7 @@ export default function FoodScanner({ onItemsDetected, onClose, householdId }: F
             />
 
             <button
-              onClick={captureImage}
+              onClick={checkAndCapture}
               disabled={isCapturing}
               className="w-20 h-20 rounded-full bg-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform disabled:opacity-50"
             >
