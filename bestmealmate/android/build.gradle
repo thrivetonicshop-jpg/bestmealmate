@@ -21,6 +21,8 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        // Amazon Appstore SDK
+        maven { url 'https://maven.amazon.com/release' }
     }
 }
 
