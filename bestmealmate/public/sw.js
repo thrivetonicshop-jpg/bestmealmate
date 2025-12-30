@@ -3,7 +3,7 @@
  * Enhanced PWA support with offline capabilities
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `bestmealmate-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `bestmealmate-dynamic-${CACHE_VERSION}`;
 const API_CACHE = `bestmealmate-api-${CACHE_VERSION}`;
@@ -16,6 +16,9 @@ const STATIC_ASSETS = [
   '/dashboard/recipes',
   '/manifest.json',
   '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/icon-96.png',
   '/offline.html'
 ];
 
