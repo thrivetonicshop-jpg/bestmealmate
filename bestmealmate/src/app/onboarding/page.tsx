@@ -14,7 +14,8 @@ import {
   Check,
   Eye,
   EyeOff,
-  Gift
+  Gift,
+  Zap
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -50,6 +51,19 @@ export default function OnboardingPage() {
       localStorage.setItem('freeScansTotal', '3')
     }
   }, [])
+
+  // Try free - go to trial experience page
+  const handleTryFree = () => {
+    // Ensure free scans are set
+    if (!localStorage.getItem('freeScansRemaining')) {
+      localStorage.setItem('freeScansRemaining', '3')
+      localStorage.setItem('freeScansTotal', '3')
+    }
+    // Mark as guest trial user
+    localStorage.setItem('guestTrialMode', 'true')
+    // Go to try page with full trial experience
+    router.push('/try')
+  }
 
   const handleSubmit = async () => {
     if (!email || !password || password.length < 6) {
@@ -101,6 +115,9 @@ export default function OnboardingPage() {
 
       // 4. Store household size preference
       localStorage.setItem('preferredServings', householdSize.toString())
+
+      // Clear guest trial mode
+      localStorage.removeItem('guestTrialMode')
 
       // Ensure free scans are set
       if (!localStorage.getItem('freeScansRemaining')) {
@@ -218,7 +235,7 @@ export default function OnboardingPage() {
                     <Gift className="w-5 h-5" />
                     <span className="font-bold text-lg">3 FREE Food Scans</span>
                   </div>
-                  <p className="text-white/90 text-sm">Try our AI scanner free - no card required</p>
+                  <p className="text-white/90 text-sm">Try our AI scanner - no signup required!</p>
                 </motion.div>
 
                 {/* Features */}
@@ -242,19 +259,33 @@ export default function OnboardingPage() {
                   ))}
                 </div>
 
-                {/* CTA */}
-                <div className="mt-auto">
+                {/* CTA Buttons */}
+                <div className="mt-auto space-y-3">
+                  {/* Primary: Try Free (no signup) */}
                   <motion.button
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.8 }}
+                    onClick={handleTryFree}
+                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-2xl font-semibold text-lg hover:from-amber-600 hover:to-orange-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/30"
+                  >
+                    <Zap className="w-5 h-5" />
+                    Try 3 Free Scans Now
+                  </motion.button>
+
+                  {/* Secondary: Create Account */}
+                  <motion.button
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.9 }}
                     onClick={() => setStep(1)}
                     className="w-full py-4 bg-brand-600 text-white rounded-2xl font-semibold text-lg hover:bg-brand-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-600/30"
                   >
-                    Get Started Free
+                    Create Free Account
                     <ArrowRight className="w-5 h-5" />
                   </motion.button>
-                  <p className="text-center text-sm text-gray-500 mt-4">
+
+                  <p className="text-center text-sm text-gray-500 mt-2">
                     Already have an account?{' '}
                     <button onClick={() => router.push('/login')} className="text-brand-600 font-medium hover:underline">
                       Sign in
