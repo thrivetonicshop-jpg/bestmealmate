@@ -20,11 +20,23 @@ const config: CapacitorConfig = {
       releaseType: 'AAB'
     }
   },
+  ios: {
+    backgroundColor: '#10B981',
+    contentInset: 'automatic',
+    preferredContentMode: 'mobile',
+    scheme: 'BestMealMate'
+  },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: '#10B981',
-      showSpinner: false
+      showSpinner: false,
+      launchAutoHide: true,
+      splashImmersive: true
+    },
+    Keyboard: {
+      resize: 'body',
+      resizeOnFullScreen: true
     }
   }
 };

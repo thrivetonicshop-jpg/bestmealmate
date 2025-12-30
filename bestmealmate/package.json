@@ -11,7 +11,11 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:stripe": "npx ts-node scripts/test-stripe.ts",
-    "prepare": "cd .. && husky || true"
+    "prepare": "cd .. && husky || true",
+    "build:mobile": "next build && next export",
+    "cap:sync": "npx cap sync",
+    "cap:ios": "npx cap open ios",
+    "cap:android": "npx cap open android"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -35,6 +39,7 @@
   "devDependencies": {
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
     "@eslint/eslintrc": "^3.3.3",
     "@playwright/test": "^1.49.0",
     "@types/node": "^20.11.0",

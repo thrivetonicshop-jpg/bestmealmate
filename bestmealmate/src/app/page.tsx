@@ -49,6 +49,8 @@ export default function HomePage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedMeal, setGeneratedMeal] = useState<{name: string, time: string, description: string, ingredients: string[]} | null>(null)
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
+  const [familySize, setFamilySize] = useState(4)
+  const [weeklyGrocerySpend, setWeeklyGrocerySpend] = useState(200)
 
   const mealSuggestions = [
     { name: "Honey Garlic Chicken", time: "30 min", description: "Tender chicken thighs glazed with a sweet and savory honey garlic sauce, served with steamed broccoli.", ingredients: ["Chicken thighs", "Honey", "Garlic", "Soy sauce", "Broccoli"] },
@@ -1412,6 +1414,95 @@ export default function HomePage() {
               Already have an account? Log in
             </Link>
           </p>
+
+          {/* Value Calculator */}
+          <div className="mt-16 bg-white rounded-3xl border-2 border-brand-200 p-8 shadow-lg">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-700 text-sm font-medium mb-4">
+                <DollarSign className="w-4 h-4" />
+                See Your Savings
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">Calculate how much you&apos;ll save</h3>
+              <p className="text-gray-600 mt-2">Most families save $100-200/month on groceries</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+              {/* Family Size Slider */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Family size: <span className="text-brand-600 font-bold">{familySize} people</span>
+                </label>
+                <input
+                  type="range"
+                  min="1"
+                  max="8"
+                  value={familySize}
+                  onChange={(e) => setFamilySize(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>1</span>
+                  <span>4</span>
+                  <span>8</span>
+                </div>
+              </div>
+
+              {/* Weekly Grocery Spend Slider */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Weekly grocery spend: <span className="text-brand-600 font-bold">${weeklyGrocerySpend}</span>
+                </label>
+                <input
+                  type="range"
+                  min="50"
+                  max="500"
+                  step="10"
+                  value={weeklyGrocerySpend}
+                  onChange={(e) => setWeeklyGrocerySpend(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-1">
+                  <span>$50</span>
+                  <span>$250</span>
+                  <span>$500</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Savings Results */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-3xl font-bold text-green-600">
+                    ${Math.round(weeklyGrocerySpend * 0.15 * 4)}
+                  </p>
+                  <p className="text-sm text-gray-600">Monthly savings</p>
+                  <p className="text-xs text-gray-400">~15% less waste</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-green-600">
+                    ${Math.round(weeklyGrocerySpend * 0.15 * 52)}
+                  </p>
+                  <p className="text-sm text-gray-600">Yearly savings</p>
+                  <p className="text-xs text-gray-400">That&apos;s {Math.round(weeklyGrocerySpend * 0.15 * 52 / (billingPeriod === 'annual' ? 99 : 9.99 * 12))}x the cost!</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-bold text-green-600">
+                    {Math.round(familySize * 0.8 * 4)} hrs
+                  </p>
+                  <p className="text-sm text-gray-600">Time saved/month</p>
+                  <p className="text-xs text-gray-400">No more &quot;what&apos;s for dinner&quot;</p>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-green-200 text-center">
+                <p className="text-lg text-gray-700">
+                  <span className="font-bold text-green-600">Premium pays for itself</span> in just{' '}
+                  <span className="font-bold">{Math.ceil(9.99 / (weeklyGrocerySpend * 0.15))} weeks</span>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
