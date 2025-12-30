@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import {
   ChefHat,
   Calendar,
@@ -22,8 +23,13 @@ import {
   X,
   Save,
   Star,
-  History
+  History,
+  Link2,
+  Loader2,
+  ListChecks
 } from 'lucide-react'
+
+const RecipeImporter = dynamic(() => import('@/components/RecipeImporter'), { ssr: false })
 import { useAuth } from '@/lib/auth-context'
 import {
   saveGeneratedMeal,
@@ -94,6 +100,8 @@ export default function MealPlanPage() {
   const [selectedMealType, setSelectedMealType] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner')
   const [ratingMealId, setRatingMealId] = useState<string | null>(null)
   const [selectedRating, setSelectedRating] = useState(0)
+  const [showRecipeImporter, setShowRecipeImporter] = useState(false)
+  const [generatingGroceryList, setGeneratingGroceryList] = useState(false)
 
   const loadSavedMeals = useCallback(async () => {
     if (!household?.id) return
@@ -393,6 +401,75 @@ export default function MealPlanPage() {
     setShowSavedMeals(false)
   }
 
+  const generateGroceryListFromPlan = async () => {
+    setGeneratingGroceryList(true)
+    try {
+      // Collect all meals with ingredients from the weekly plan
+      const mealsWithIngredients = weeklyPlan.flatMap(day =>
+        Object.values(day.meals)
+          .filter((meal): meal is Meal => meal !== null && !!meal.ingredients?.length)
+          .map(meal => ({
+            name: meal.name,
+            servings: meal.servings,
+            ingredients: meal.ingredients || []
+          }))
+      )
+
+      if (mealsWithIngredients.length === 0) {
+        alert('No meals with ingredients in your plan. Add some meals first!')
+        setGeneratingGroceryList(false)
+        return
+      }
+
+      const response = await fetch('/api/generate-grocery-list', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          householdId: household?.id,
+          meals: mealsWithIngredients,
+          excludeStaples: true
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Store grocery list in localStorage for the groceries page to pick up
+        localStorage.setItem('generatedGroceryList', JSON.stringify({
+          items: data.groceryList.items,
+          mealsIncluded: data.groceryList.summary.mealsIncluded,
+          generatedAt: new Date().toISOString()
+        }))
+        window.location.href = '/dashboard/groceries?from=plan'
+      }
+    } catch (error) {
+      console.error('Error generating grocery list:', error)
+      alert('Failed to generate grocery list. Please try again.')
+    }
+    setGeneratingGroceryList(false)
+  }
+
+  const handleRecipeImported = (recipe: { name: string; ingredients: string[]; instructions: string[]; servings: number; prep_time: number; cook_time: number; calories: number }) => {
+    // Convert imported recipe to meal format and add to saved meals
+    const importedMeal: GeneratedMeal = {
+      household_id: household?.id || '',
+      user_id: user?.id,
+      name: recipe.name,
+      description: `Imported recipe with ${recipe.ingredients.length} ingredients`,
+      meal_type: selectedMealType,
+      prep_time: `${recipe.prep_time} min`,
+      cook_time: `${recipe.cook_time} min`,
+      total_time: `${recipe.prep_time + recipe.cook_time} min`,
+      servings: recipe.servings,
+      ingredients: recipe.ingredients.map(ing => ({ name: ing, amount: '' })),
+      instructions: recipe.instructions,
+      calories_per_serving: recipe.calories,
+    }
+
+    setAiSuggestion(importedMeal)
+    setShowAISuggestion(true)
+    setShowRecipeImporter(false)
+  }
+
   const addToGroceryList = () => {
     window.location.href = '/dashboard/groceries'
   }
@@ -436,6 +513,13 @@ export default function MealPlanPage() {
             </div>
             <div className="flex items-center gap-3">
               <button
+                onClick={() => setShowRecipeImporter(true)}
+                className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
+                title="Import Recipe from URL"
+              >
+                <Link2 className="w-5 h-5 text-gray-600" />
+              </button>
+              <button
                 onClick={() => setShowSavedMeals(true)}
                 className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
                 title="Saved Meals"
@@ -443,8 +527,21 @@ export default function MealPlanPage() {
                 <History className="w-5 h-5 text-gray-600" />
               </button>
               <button
+                onClick={generateGroceryListFromPlan}
+                disabled={generatingGroceryList}
+                className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors disabled:opacity-50"
+                title="Auto-Generate Grocery List"
+              >
+                {generatingGroceryList ? (
+                  <Loader2 className="w-5 h-5 text-gray-600 animate-spin" />
+                ) : (
+                  <ListChecks className="w-5 h-5 text-gray-600" />
+                )}
+              </button>
+              <button
                 onClick={addToGroceryList}
                 className="p-2.5 hover:bg-gray-100 rounded-xl transition-colors"
+                title="View Grocery List"
               >
                 <ShoppingCart className="w-5 h-5 text-gray-600" />
               </button>
@@ -999,6 +1096,14 @@ export default function MealPlanPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Recipe Importer Modal */}
+      {showRecipeImporter && (
+        <RecipeImporter
+          onRecipeImported={handleRecipeImported}
+          onClose={() => setShowRecipeImporter(false)}
+        />
       )}
     </div>
   )

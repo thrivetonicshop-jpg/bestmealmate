@@ -91,6 +91,30 @@ export default function GroceriesPage() {
       if (formattedLists.length > 0 && !activeListId) {
         setActiveListId(formattedLists[0].id)
       }
+
+      // Check if we have a generated grocery list from meal plan
+      const generatedList = localStorage.getItem('generatedGroceryList')
+      if (generatedList && window.location.search.includes('from=plan')) {
+        const parsed = JSON.parse(generatedList)
+        const newList: LocalGroceryList = {
+          id: `generated-${Date.now()}`,
+          household_id: household.id,
+          name: `From Meal Plan (${new Date(parsed.generatedAt).toLocaleDateString()})`,
+          status: 'active',
+          created_at: parsed.generatedAt,
+          items: parsed.items.map((item: { name: string; amount: string; aisle: string }, i: number) => ({
+            id: `gen-${i}`,
+            name: item.name,
+            quantity: item.amount,
+            aisle: item.aisle,
+            is_purchased: false
+          }))
+        }
+        setLists(prev => [newList, ...prev])
+        setActiveListId(newList.id)
+        localStorage.removeItem('generatedGroceryList')
+        toast.success(`Generated ${parsed.items.length} items from ${parsed.mealsIncluded} meals!`)
+      }
     } catch (error) {
       console.error('Error loading grocery lists:', error)
       // Fallback to demo data
