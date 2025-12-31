@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { getSupabaseAdmin } from '@/lib/supabase'
+import {
+  sendWelcomeEmail,
+  sendPaymentFailedEmail,
+  sendSubscriptionCanceledEmail,
+  sendInvoicePaidEmail,
+} from '@/lib/email'
 
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY
@@ -44,15 +50,26 @@ export async function POST(request: NextRequest) {
         const tier = session.metadata?.tier as 'premium' | 'family'
 
         if (householdId && tier) {
-          // Update household subscription
+          // Calculate trial end date (14 days from now)
+          const trialEndsAt = new Date()
+          trialEndsAt.setDate(trialEndsAt.getDate() + 14)
+
+          // Update household subscription with trial info
           await supabaseAdmin
             .from('households')
             .update({
               subscription_tier: tier,
+              subscription_status: 'trialing',
               stripe_customer_id: session.customer as string,
               stripe_subscription_id: session.subscription as string,
+              trial_ends_at: trialEndsAt.toISOString(),
             })
             .eq('id', householdId)
+
+          // Send welcome email
+          if (session.customer_email) {
+            await sendWelcomeEmail(session.customer_email, tier)
+          }
         }
         break
       }
@@ -78,11 +95,27 @@ export async function POST(request: NextRequest) {
             tier = 'family'
           }
 
+          // Map Stripe status to our status
+          type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
+          const statusMap: Record<string, SubscriptionStatus> = {
+            active: 'active',
+            trialing: 'trialing',
+            past_due: 'past_due',
+            canceled: 'canceled',
+            incomplete: 'incomplete',
+            incomplete_expired: 'canceled',
+            unpaid: 'past_due',
+          }
+
           await supabaseAdmin
             .from('households')
             .update({
-              subscription_tier: subscription.status === 'active' ? tier : 'free',
+              subscription_tier: ['active', 'trialing'].includes(subscription.status) ? tier : 'free',
+              subscription_status: statusMap[subscription.status] || 'active',
               stripe_subscription_id: subscription.id,
+              trial_ends_at: subscription.trial_end
+                ? new Date(subscription.trial_end * 1000).toISOString()
+                : null,
             })
             .eq('id', household.id)
         }
@@ -97,17 +130,61 @@ export async function POST(request: NextRequest) {
           .from('households')
           .update({
             subscription_tier: 'free',
+            subscription_status: 'canceled',
             stripe_subscription_id: null,
+            trial_ends_at: null,
           })
           .eq('stripe_customer_id', subscription.customer as string)
+
+        // Get customer email and send notification
+        const stripe = getStripe()
+        const customer = await stripe.customers.retrieve(subscription.customer as string)
+        if (customer && !customer.deleted && customer.email) {
+          await sendSubscriptionCanceledEmail(customer.email)
+        }
         break
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
 
-        // Could send email notification here
         console.log(`Payment failed for customer: ${invoice.customer}`)
+
+        // Update subscription status
+        await supabaseAdmin
+          .from('households')
+          .update({ subscription_status: 'past_due' })
+          .eq('stripe_customer_id', invoice.customer as string)
+
+        // Send payment failed email
+        if (invoice.customer_email) {
+          await sendPaymentFailedEmail(invoice.customer_email)
+        }
+        break
+      }
+
+      case 'invoice.paid': {
+        const invoice = event.data.object as Stripe.Invoice
+        const subscriptionId = typeof invoice.parent?.subscription_details?.subscription === 'string'
+          ? invoice.parent.subscription_details.subscription
+          : null
+
+        // Update subscription status to active if payment succeeded
+        if (subscriptionId) {
+          await supabaseAdmin
+            .from('households')
+            .update({ subscription_status: 'active' })
+            .eq('stripe_subscription_id', subscriptionId)
+        }
+
+        // Send receipt email
+        if (invoice.customer_email && invoice.amount_paid && invoice.amount_paid > 0) {
+          await sendInvoicePaidEmail(
+            invoice.customer_email,
+            invoice.amount_paid,
+            invoice.currency || 'usd'
+          )
+        }
         break
       }
     }

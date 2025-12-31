@@ -63,6 +63,7 @@ test.describe('Landing Page', () => {
 
   test('Get Started link navigates to onboarding', async ({ page }) => {
     await page.getByRole('link', { name: /get started free/i }).first().click();
+    await page.waitForURL(/.*onboarding/, { timeout: 10000 });
     await expect(page).toHaveURL(/.*onboarding/);
   });
 });
