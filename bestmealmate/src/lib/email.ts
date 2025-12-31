@@ -1,12 +1,9 @@
 /**
  * Email notification service for BestMealMate
- *
- * In production, integrate with a real email service like:
- * - Resend (https://resend.com)
- * - SendGrid
- * - AWS SES
- * - Postmark
+ * Uses Resend for production email delivery
  */
+
+import { Resend } from 'resend'
 
 export interface EmailOptions {
   to: string
@@ -15,26 +12,48 @@ export interface EmailOptions {
   text?: string
 }
 
+// Initialize Resend client (lazy initialization)
+function getResend(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    return null
+  }
+  return new Resend(apiKey)
+}
+
 /**
- * Send an email notification
- * Currently logs to console - integrate with email service in production
+ * Send an email notification via Resend
+ * Falls back to console logging if RESEND_API_KEY is not configured
  */
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    // TODO: Integrate with email service (Resend recommended)
-    // Example with Resend:
-    // const resend = new Resend(process.env.RESEND_API_KEY)
-    // await resend.emails.send({
-    //   from: 'BestMealMate <noreply@bestmealmate.com>',
-    //   to: options.to,
-    //   subject: options.subject,
-    //   html: options.html,
-    // })
+    const resend = getResend()
 
-    console.log('📧 Email notification:', {
-      to: options.to,
-      subject: options.subject,
-    })
+    if (resend) {
+      // Send via Resend in production
+      const { error } = await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'BestMealMate <noreply@bestmealmate.com>',
+        to: options.to,
+        subject: options.subject,
+        html: options.html,
+      })
+
+      if (error) {
+        console.error('Resend error:', error)
+        return false
+      }
+
+      console.log('📧 Email sent via Resend:', {
+        to: options.to,
+        subject: options.subject,
+      })
+    } else {
+      // Fallback: log to console in development
+      console.log('📧 Email notification (dev mode - no RESEND_API_KEY):', {
+        to: options.to,
+        subject: options.subject,
+      })
+    }
 
     return true
   } catch (error) {
