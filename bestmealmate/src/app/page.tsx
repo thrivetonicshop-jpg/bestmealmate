@@ -468,6 +468,7 @@ export default function HomePage() {
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Features</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">How it Works</a>
               <a href="#pricing" className="text-gray-600 hover:text-gray-900 font-medium transition-colors">Pricing</a>
             </div>
 
@@ -979,8 +980,50 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* How it Works Section */}
+      <section id="how-it-works" className="py-20 lg:py-32 bg-gray-50 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+              How it works
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Get started in 3 simple steps and enjoy stress-free meal planning.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { step: "1", title: "Tell us about your family", desc: "Add profiles for each family member with their dietary needs and preferences." },
+              { step: "2", title: "Get personalized meal plans", desc: "Our AI creates weekly meal plans that work for everyone in your household." },
+              { step: "3", title: "Shop and cook with ease", desc: "Get organized grocery lists and step-by-step recipes delivered to you." }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="text-center"
+              >
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white text-2xl font-bold">
+                  {item.step}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{item.title}</h3>
+                <p className="text-gray-600">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 lg:py-32 bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <section id="pricing" className="py-20 lg:py-32 bg-white px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1074,7 +1117,7 @@ export default function HomePage() {
                 </li>
               </ul>
               <Link
-                href="/onboarding"
+                href="/onboarding?plan=premium"
                 className="block w-full py-3 text-center bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all"
               >
                 Start Free Trial
@@ -1117,12 +1160,58 @@ export default function HomePage() {
                 </li>
               </ul>
               <Link
-                href="/onboarding"
+                href="/onboarding?plan=family"
                 className="block w-full py-3 text-center border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 Start Free Trial
               </Link>
             </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 lg:py-32 bg-gray-50 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg text-gray-600">
+              Got questions? We&apos;ve got answers.
+            </p>
+          </motion.div>
+
+          <div className="space-y-4">
+            {[
+              { q: "How does the AI meal planning work?", a: "Our AI analyzes your family's dietary preferences, restrictions, and goals to create personalized weekly meal plans that everyone can enjoy." },
+              { q: "Can I customize the meal plans?", a: "Absolutely! You can swap meals, adjust portions, and save your favorites. The AI learns from your preferences over time." },
+              { q: "Is there a free trial?", a: "Yes! Start with our free plan which includes 2 family profiles and 5 AI suggestions per week. Upgrade anytime for more features." },
+              { q: "How do I cancel my subscription?", a: "You can cancel anytime from your account settings. No questions asked, no hidden fees." }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <details className="group bg-white rounded-xl border border-gray-200 overflow-hidden">
+                  <summary className="flex items-center justify-between p-4 cursor-pointer font-medium text-gray-900 hover:bg-gray-50">
+                    {item.q}
+                    <span className="ml-2 text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="px-4 pb-4 text-gray-600">
+                    {item.a}
+                  </div>
+                </details>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -1186,6 +1275,7 @@ export default function HomePage() {
               <span className="font-bold">BestMealMate</span>
             </div>
             <div className="flex gap-6 text-sm text-gray-400">
+              <Link href="/about" className="hover:text-white transition-colors">About</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
               <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
               <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
