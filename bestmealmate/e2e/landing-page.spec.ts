@@ -55,7 +55,9 @@ test.describe('Landing Page', () => {
   });
 
   test('Sign In link navigates to login page', async ({ page }) => {
-    await page.getByRole('link', { name: /sign in/i }).first().click();
+    // Click Sign In link in nav
+    await page.locator('nav a:has-text("Sign In")').first().click();
+    await page.waitForURL(/.*login/, { timeout: 10000 });
     await expect(page).toHaveURL(/.*login/);
   });
 

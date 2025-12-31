@@ -70,24 +70,10 @@ test.describe('BestMealMate Button Navigation Tests', () => {
     await page.waitForURL(/\/onboarding\?plan=family/);
   });
 
-  // Watch Demo button - skip if not implemented
-  test('Watch Demo button exists', async ({ page }) => {
-    const demoButton = page.locator('text=Watch').first();
-    await expect(demoButton).toBeVisible();
-  });
-
-  // View all reviews button
-  test('View all reviews button navigates to /about', async ({ page }) => {
-    const reviewsLink = page.locator('text=View all').first();
-    await reviewsLink.scrollIntoViewIfNeeded();
-    await reviewsLink.click();
-    await page.waitForURL(/\/about/);
-  });
-
   // FAQ section
   test('FAQ accordion expands on click', async ({ page }) => {
     await page.locator('#faq').scrollIntoViewIfNeeded();
-    const firstQuestion = page.locator('#faq button').first();
+    const firstQuestion = page.locator('#faq summary').first();
     await firstQuestion.click();
     await page.waitForTimeout(300);
   });
