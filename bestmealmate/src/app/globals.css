@@ -17,6 +17,19 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Mobile touch optimizations */
+@media (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
 }
 
 /* Custom scrollbar */
@@ -199,17 +212,25 @@ body.keyboard-nav textarea:focus {
     transition: left 0.5s ease;
   }
 
-  .card-shine:hover::before {
-    left: 100%;
+  @media (hover: hover) {
+    .card-shine:hover::before {
+      left: 100%;
+    }
   }
 
   .hover-lift {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
 
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.15);
+  @media (hover: hover) {
+    .hover-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  .hover-lift:active {
+    transform: scale(0.98);
   }
 
   .gradient-border {
@@ -338,8 +359,17 @@ body.keyboard-nav textarea:focus {
 
   .card-interactive {
     @apply bg-white rounded-2xl border border-gray-100 shadow-card cursor-pointer;
-    @apply hover:shadow-card-hover hover:border-brand-200 hover:-translate-y-1;
     @apply transition-all duration-300;
+  }
+
+  @media (hover: hover) {
+    .card-interactive:hover {
+      @apply shadow-card-hover border-brand-200 -translate-y-1;
+    }
+  }
+
+  .card-interactive:active {
+    @apply scale-[0.98];
   }
 
   .input-field {
