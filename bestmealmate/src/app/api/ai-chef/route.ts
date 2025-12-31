@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { checkAndIncrementUsage, getUsageStats } from '@/lib/usage'
 
 function getAnthropic() {
   return new Anthropic({
@@ -10,7 +11,21 @@ function getAnthropic() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { message, context, pantryItems, familyMembers, action } = body
+    const { message, context, pantryItems, familyMembers, householdId } = body
+
+    // Check usage limits if householdId provided
+    if (householdId) {
+      const usageCheck = await checkAndIncrementUsage(householdId)
+
+      if (!usageCheck.allowed) {
+        return NextResponse.json({
+          error: usageCheck.message,
+          usage: usageCheck.usage,
+          success: false,
+          limitReached: true,
+        }, { status: 429 })
+      }
+    }
 
     // Build context from either format
     const contextData = context || { pantryItems, familyMembers }
@@ -52,12 +67,16 @@ Guidelines:
     const textContent = response.content.find(block => block.type === 'text')
     const reply = textContent ? textContent.text : 'I apologize, but I could not generate a response.'
 
+    // Get updated usage stats
+    const usage = householdId ? await getUsageStats(householdId) : null
+
     // Return all field names that frontend might expect
     return NextResponse.json({
       reply,
       message: reply,
       suggestion: reply,
-      success: true
+      success: true,
+      usage,
     })
   } catch (error) {
     console.error('AI Chef error:', error)

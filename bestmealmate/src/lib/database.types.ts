@@ -14,10 +14,14 @@ export type Database = {
           id: string
           name: string
           subscription_tier: 'free' | 'premium' | 'family'
+          subscription_status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           timezone: string
           preferred_grocery_store: string | null
+          ai_suggestions_this_week: number
+          ai_suggestions_reset_at: string | null
+          trial_ends_at: string | null
           created_at: string
           updated_at: string
         }
@@ -25,10 +29,14 @@ export type Database = {
           id?: string
           name?: string
           subscription_tier?: 'free' | 'premium' | 'family'
+          subscription_status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           timezone?: string
           preferred_grocery_store?: string | null
+          ai_suggestions_this_week?: number
+          ai_suggestions_reset_at?: string | null
+          trial_ends_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -36,10 +44,14 @@ export type Database = {
           id?: string
           name?: string
           subscription_tier?: 'free' | 'premium' | 'family'
+          subscription_status?: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete'
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           timezone?: string
           preferred_grocery_store?: string | null
+          ai_suggestions_this_week?: number
+          ai_suggestions_reset_at?: string | null
+          trial_ends_at?: string | null
           created_at?: string
           updated_at?: string
         }
