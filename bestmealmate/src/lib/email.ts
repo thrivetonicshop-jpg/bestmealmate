@@ -32,7 +32,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     if (resend) {
       // Send via Resend in production
       const { error } = await resend.emails.send({
-        from: process.env.EMAIL_FROM || 'BestMealMate <noreply@bestmealmate.com>',
+        from: process.env.EMAIL_FROM || 'BestMealMate <hello@bestmealmate.com>',
         to: options.to,
         subject: options.subject,
         html: options.html,
