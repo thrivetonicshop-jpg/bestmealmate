@@ -66,6 +66,7 @@ test.describe('Login Page', () => {
 
   test('logo links back to home page', async ({ page }) => {
     await page.getByRole('link', { name: /bestmealmate/i }).click();
+    await page.waitForURL('/', { timeout: 10000 });
     await expect(page).toHaveURL('/');
   });
 });
