@@ -7,9 +7,9 @@ test.describe('Landing Page', () => {
 
   test('displays the main hero section', async ({ page }) => {
     // Check for the main heading
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Meal planning for');
-    // Use more specific selector to avoid matching multiple elements
-    await expect(page.locator('h1 >> text=real families').first()).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toContainText("What's for dinner");
+    // Check for subheading or description
+    await expect(page.locator('text=AI-powered meal planning').first()).toBeVisible();
   });
 
   test('displays the BestMealMate logo and branding', async ({ page }) => {
