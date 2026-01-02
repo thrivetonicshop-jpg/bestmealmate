@@ -399,10 +399,10 @@ export default function RootLayout({
           `}
         </Script>
         {/* Google AdSense - Required for crawler recognition */}
-        <meta name="google-adsense-account" content="ca-pub-3073911588578821" />
+        <meta name="google-adsense-account" content="ca-pub-6442421268022178" />
         <Script
           id="google-adsense"
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3073911588578821"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6442421268022178"
           strategy="beforeInteractive"
           crossOrigin="anonymous"
         />

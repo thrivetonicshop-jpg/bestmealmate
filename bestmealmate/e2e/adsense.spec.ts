@@ -34,7 +34,7 @@ test.describe('AdSense Configuration', () => {
 
     // Check for AdSense account meta tag
     const adsenseMeta = await page.locator('meta[name="google-adsense-account"]');
-    await expect(adsenseMeta).toHaveAttribute('content', 'ca-pub-3073911588578821');
+    await expect(adsenseMeta).toHaveAttribute('content', 'ca-pub-6442421268022178');
   });
 
   test('homepage loads AdSense script', async ({ page }) => {
