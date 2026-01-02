@@ -100,6 +100,16 @@ export default function SettingsPage() {
     }
   }, [user?.id, loadPreferences, loadLoginHistory])
 
+  // Handle checkout cancelled message
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('checkout') === 'cancelled') {
+      toast('Checkout cancelled. You can upgrade anytime!', { icon: 'ℹ️' })
+      // Clean up URL
+      window.history.replaceState({}, '', '/dashboard/settings')
+    }
+  }, [])
+
   // Apply theme
   useEffect(() => {
     const applyTheme = (theme: string) => {

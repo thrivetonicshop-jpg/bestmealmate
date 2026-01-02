@@ -127,7 +127,17 @@ export default function OnboardingPage() {
 
       setIsComplete(true)
 
-      // Brief delay for success animation
+      // Check if email confirmation is required (no session means confirmation needed)
+      if (!authData.session) {
+        // Email confirmation required - show message and redirect to login
+        setTimeout(() => {
+          toast.success('Account created! Please check your email to confirm.')
+          router.push('/login?message=confirm_email')
+        }, 1500)
+        return
+      }
+
+      // Session exists - user is logged in, go to dashboard
       setTimeout(() => {
         toast.success('Welcome to BestMealMate!')
         router.push('/dashboard')
