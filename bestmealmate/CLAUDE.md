@@ -159,7 +159,7 @@ npx playwright test --list
 - Always read and follow CLAUDE.md instructions
 
 ### Google Ads & AdSense
-- Publisher ID: `ca-pub-3073911588578821`
+- Publisher ID: `ca-pub-6442421268022178`
 - Ads Tag ID: `AW-17838684120`
 - ads.txt location: `public/ads.txt`
 - All Google tracking code is in `src/app/layout.tsx`
