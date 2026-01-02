@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ChefHat, Mail, Lock, ArrowRight, Sparkles, Check } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -10,13 +10,17 @@ import { supabase } from '@/lib/supabase'
 const REMEMBER_EMAIL_KEY = 'bestmealmate_remember_email'
 const REMEMBER_ME_KEY = 'bestmealmate_remember_me'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+
+  // Check for confirmation message from onboarding
+  const confirmEmailMessage = searchParams.get('message') === 'confirm_email'
 
   // Load remembered email on mount
   useEffect(() => {
@@ -96,6 +100,21 @@ export default function LoginPage() {
               <span className="text-2xl font-bold text-gray-900">BestMealMate</span>
             </Link>
           </div>
+
+          {/* Email Confirmation Banner */}
+          {confirmEmailMessage && (
+            <div className="mb-6 p-4 bg-brand-50 border border-brand-200 rounded-xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-brand-100 rounded-full flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-brand-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-brand-900">Check your email</p>
+                  <p className="text-sm text-brand-700">Click the link we sent to confirm your account, then sign in.</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Header */}
           <div className="mb-8">
@@ -281,5 +300,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }

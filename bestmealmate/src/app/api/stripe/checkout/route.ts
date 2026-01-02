@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         tier: tier,
       },
       success_url: `${appUrl}/dashboard?upgraded=true`,
-      cancel_url: `${appUrl}/dashboard/settings`,
+      cancel_url: `${appUrl}/dashboard/settings?checkout=cancelled`,
       subscription_data: {
         trial_period_days: 14,
       },
