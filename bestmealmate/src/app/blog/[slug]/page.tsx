@@ -692,8 +692,42 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   )
 }
 
+function sanitizeUrl(url: string): string {
+  // Only allow safe URL protocols to prevent javascript: XSS attacks
+  const trimmedUrl = url.trim()
+
+  // Allow relative URLs starting with /
+  if (trimmedUrl.startsWith('/')) {
+    return trimmedUrl
+  }
+
+  // Allow safe protocols
+  const safeProtocols = ['http:', 'https:', 'mailto:']
+  try {
+    const parsed = new URL(trimmedUrl)
+    if (safeProtocols.includes(parsed.protocol)) {
+      return trimmedUrl
+    }
+  } catch {
+    // If URL parsing fails and it's not a relative URL, block it
+  }
+
+  // Block unsafe URLs (javascript:, data:, vbscript:, etc.)
+  return '#'
+}
+
+function escapeHtml(text: string): string {
+  // Escape HTML special characters to prevent XSS in text content
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 function formatContent(content: string): string {
-  // Simple markdown to HTML conversion
+  // Simple markdown to HTML conversion with XSS protection
   return content
     .replace(/^### (.*$)/gm, '<h3 class="text-xl font-bold mt-8 mb-4">$1</h3>')
     .replace(/^## (.*$)/gm, '<h2 class="text-2xl font-bold mt-10 mb-4">$1</h2>')
@@ -702,10 +736,14 @@ function formatContent(content: string): string {
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/^\- (.*$)/gm, '<li class="ml-4">$1</li>')
     .replace(/(<li.*<\/li>\n?)+/g, '<ul class="list-disc my-4">$&</ul>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" class="text-brand-600 hover:underline">$1</a>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, text, url) => {
+      const safeUrl = sanitizeUrl(url)
+      const safeText = escapeHtml(text)
+      return `<a href="${safeUrl}" class="text-brand-600 hover:underline">${safeText}</a>`
+    })
     .replace(/\n\n/g, '</p><p class="my-4">')
     .replace(/^\|(.+)\|$/gm, (match) => {
       const cells = match.split('|').filter(c => c.trim())
-      return '<tr>' + cells.map(c => `<td class="border px-4 py-2">${c.trim()}</td>`).join('') + '</tr>'
+      return '<tr>' + cells.map(c => `<td class="border px-4 py-2">${escapeHtml(c.trim())}</td>`).join('') + '</tr>'
     })
 }
